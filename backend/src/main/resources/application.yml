@@ -7,12 +7,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
 
   servlet:
     multipart:
@@ -25,8 +30,9 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET:apexmetrics-dev-secret-change-in-production-min32chars}
-    expiration-ms: 86400000
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 
 logging:
   level:
     com.apexmetrics: DEBUG
+    org.flywaydb: INFO
