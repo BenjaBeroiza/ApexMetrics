@@ -29,11 +29,11 @@ public class AuthService implements IAuthService {
     public AuthResponseDTO register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             log.error("AuthService.register: email already registered — {}", dto.getEmail());
-            throw new UserAlreadyExistsException("Email already registered: " + dto.getEmail());
+            throw new UserAlreadyExistsException("El correo electrónico ya está registrado");
         }
         if (userRepository.existsByUsername(dto.getUsername())) {
             log.error("AuthService.register: username already taken — {}", dto.getUsername());
-            throw new UserAlreadyExistsException("Username already taken: " + dto.getUsername());
+            throw new UserAlreadyExistsException("El nombre de usuario ya está en uso");
         }
 
         User user = User.builder()
@@ -54,7 +54,7 @@ public class AuthService implements IAuthService {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> {
                     log.error("AuthService.authenticate: user not found — {}", dto.getEmail());
-                    return new CredentialException("Invalid email or password");
+                    return new CredentialException("Correo electrónico o contraseña incorrectos");
                 });
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {

@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleFileTooLarge(MaxUploadSizeExceededException ex) {
         log.error("Payload too large: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(errorBody("File exceeds maximum allowed size (10 MB)", 413));
+                .body(errorBody("El archivo supera el tamaño máximo permitido (10 MB)", 413));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
         String details = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("Validation failed: " + details, 400));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody("Error de validación: " + details, 400));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         log.error("Unhandled exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorBody("Internal server error", 500));
+                .body(errorBody("Error interno del servidor", 500));
     }
 
     private Map<String, Object> errorBody(String message, int status) {

@@ -46,17 +46,17 @@ public class TelemetryService implements ITelemetryService {
                 .filter(p -> p.getSimulatorType().equalsIgnoreCase(simulatorType))
                 .findFirst()
                 .orElseThrow(() -> new CsvInvalidSchemaException(
-                        "Unknown simulator type: " + simulatorType, "simulatorType"));
+                        "Tipo de simulador no reconocido: " + simulatorType, "simulatorType"));
 
         List<TelemetryPoint> rawPoints = parser.parse(file);
         List<TelemetryPoint> points = downsample(rawPoints);
 
         Track track = trackRepository.findById(trackId)
-                .orElseThrow(() -> new IllegalArgumentException("Track not found: " + trackId));
+                .orElseThrow(() -> new IllegalArgumentException("Circuito no encontrado: " + trackId));
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryId));
+                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada: " + categoryId));
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userEmail));
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + userEmail));
 
         TelemetrySession session = TelemetrySession.builder()
                 .user(user)
