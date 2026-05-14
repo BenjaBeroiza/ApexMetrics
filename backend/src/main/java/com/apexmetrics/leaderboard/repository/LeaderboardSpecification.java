@@ -15,6 +15,8 @@ public class LeaderboardSpecification {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            predicates.add(root.get("bestLapTime").isNotNull());
+
             if (trackId != null) {
                 predicates.add(cb.equal(root.get("track").get("id"), trackId));
             }
@@ -22,7 +24,7 @@ public class LeaderboardSpecification {
                 predicates.add(cb.equal(root.get("category").get("id"), categoryId));
             }
 
-            query.orderBy(cb.asc(root.get("uploadedAt")));
+            query.orderBy(cb.asc(root.get("bestLapTime")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

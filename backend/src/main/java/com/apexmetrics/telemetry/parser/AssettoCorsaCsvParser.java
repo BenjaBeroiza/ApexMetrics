@@ -34,7 +34,7 @@ public class AssettoCorsaCsvParser implements CsvParser {
 
             String[] headers = reader.readNext();
             if (headers == null) {
-                throw new CsvInvalidSchemaException("CSV file is empty", "ALL");
+                throw new CsvInvalidSchemaException("El archivo CSV está vacío", "ALL");
             }
 
             Map<String, Integer> headerIndex = buildHeaderIndex(headers);
@@ -54,7 +54,7 @@ public class AssettoCorsaCsvParser implements CsvParser {
             throw e;
         } catch (Exception e) {
             log.error("AssettoCorsaCsvParser.parse: failed to read CSV — {}", e.getMessage());
-            throw new CsvInvalidSchemaException("Failed to parse Assetto Corsa CSV: " + e.getMessage(), "UNKNOWN");
+            throw new CsvInvalidSchemaException("Error al procesar el CSV de Assetto Corsa: " + e.getMessage(), "UNKNOWN");
         }
         return points;
     }
@@ -70,7 +70,7 @@ public class AssettoCorsaCsvParser implements CsvParser {
     private void validateHeaders(Map<String, Integer> headerIndex) {
         for (String required : REQUIRED_HEADERS) {
             if (!headerIndex.containsKey(required)) {
-                throw new CsvInvalidSchemaException("Missing required column: " + required, required);
+                throw new CsvInvalidSchemaException("Columna requerida no encontrada: " + required, required);
             }
         }
     }

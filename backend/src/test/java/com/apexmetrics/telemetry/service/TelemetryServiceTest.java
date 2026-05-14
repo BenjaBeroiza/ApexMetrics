@@ -83,7 +83,7 @@ class TelemetryServiceTest {
 
         MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
         SessionSummaryDTO result = telemetryService.uploadSession(
-                file, 1L, 1L, "IRACING", "piloto@apexmetrics.com");
+            file, 1L, 1L, "IRACING", "piloto@apexmetrics.com", null);
 
         assertThat(result.getSessionId()).isEqualTo(10L);
         assertThat(result.getTrackName()).isEqualTo("Monza");
@@ -98,7 +98,7 @@ class TelemetryServiceTest {
         MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
 
         assertThatThrownBy(() -> telemetryService.uploadSession(
-                file, 1L, 1L, "UNKNOWN_SIM", "piloto@apexmetrics.com"))
+            file, 1L, 1L, "UNKNOWN_SIM", "piloto@apexmetrics.com", null))
                 .isInstanceOf(CsvInvalidSchemaException.class)
                 .hasMessageContaining("Unknown simulator type");
     }
@@ -112,7 +112,7 @@ class TelemetryServiceTest {
         MockMultipartFile file = new MockMultipartFile("file", "bad.csv", "text/csv", new byte[0]);
 
         assertThatThrownBy(() -> telemetryService.uploadSession(
-                file, 1L, 1L, "IRACING", "piloto@apexmetrics.com"))
+            file, 1L, 1L, "IRACING", "piloto@apexmetrics.com", null))
                 .isInstanceOf(CsvInvalidSchemaException.class)
                 .hasMessageContaining("Speed");
     }

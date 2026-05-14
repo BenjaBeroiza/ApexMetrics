@@ -16,6 +16,7 @@ import com.apexmetrics.telemetry.repository.TrackRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class TelemetryService implements ITelemetryService {
     @Override
     @Transactional
     public SessionSummaryDTO uploadSession(MultipartFile file, Long trackId, Long categoryId,
-                                           String simulatorType, String userEmail) {
+                                           String simulatorType, String userEmail, Double bestLapTime) {
         CsvParser parser = csvParsers.stream()
                 .filter(p -> p.getSimulatorType().equalsIgnoreCase(simulatorType))
                 .findFirst()
@@ -63,14 +65,14 @@ public class TelemetryService implements ITelemetryService {
                 .track(track)
                 .category(category)
                 .uploadedAt(LocalDateTime.now())
-                .bestLapTime(null)
+                .bestLapTime(bestLapTime)
                 .build();
         TelemetrySession saved = sessionRepository.save(session);
 
         points.forEach(p -> p.setSession(saved));
         pointRepository.saveAll(points);
 
-        log.info("TelemetryService.uploadSession: persisted session {} with {} points for user {}",
+        log.info("TelemetryService.uploadSession: sesión {} guardada con {} puntos para usuario {}",
                 saved.getId(), points.size(), userEmail);
 
         return new SessionSummaryDTO(
@@ -78,9 +80,38 @@ public class TelemetryService implements ITelemetryService {
                 track.getName(),
                 category.getName(),
                 saved.getUploadedAt(),
-                null,
+                saved.getBestLapTime(),
                 points.size()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SessionSummaryDTO> obtenerHistorial(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + userEmail));
+        return sessionRepository.findByUserId(user.getId()).stream()
+                .map(s -> new SessionSummaryDTO(
+                        s.getId(),
+                        s.getTrack().getName(),
+                        s.getCategory().getName(),
+                        s.getUploadedAt(),
+                        s.getBestLapTime(),
+                        0
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void eliminarSesion(Long id, String userEmail) {
+        TelemetrySession session = sessionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + id));
+        if (!session.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar esta sesión");
+        }
+        sessionRepository.deleteById(id);
+        log.info("TelemetryService.eliminarSesion: sesión {} eliminada por usuario {}", id, userEmail);
     }
 
     List<TelemetryPoint> downsample(List<TelemetryPoint> points) {
@@ -90,7 +121,7 @@ public class TelemetryService implements ITelemetryService {
         for (int i = 0; i < points.size() && result.size() < MAX_POINTS; i += step) {
             result.add(points.get(i));
         }
-        log.info("TelemetryService.downsample: reduced {} → {} points", points.size(), result.size());
+        log.info("TelemetryService.downsample: reducido {} → {} puntos", points.size(), result.size());
         return result;
     }
 }
