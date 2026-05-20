@@ -74,7 +74,12 @@ public class AssettoCorsaCsvParser implements CsvParser {
     private Double parseDouble(String[] row, Map<String, Integer> idx, String col) {
         int i = idx.get(col);
         if (i >= row.length || row[i].isBlank()) return 0.0;
-        return Double.parseDouble(row[i].trim());
+        try {
+            return Double.parseDouble(row[i].trim());
+        } catch (NumberFormatException e) {
+            log.warn("AssettoCorsaCsvParser.parseDouble: valor inválido en columna '{}' → '{}', usando 0.0", col, row[i].trim());
+            return 0.0;
+        }
     }
     private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum) {
         TelemetryPoint p = new TelemetryPoint();
