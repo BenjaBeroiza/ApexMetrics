@@ -18,6 +18,18 @@ public class LeaderboardService implements ILeaderboardService {
 
     private final LeaderboardRepository leaderboardRepository;
 
+    /**
+     * Devuelve la página del leaderboard global aplicando los filtros recibidos.
+     * Construye un Pageable con page/size del DTO, arma una Specification dinámica
+     * con {@link LeaderboardSpecification#withFilters(Long, Long)} y consulta el
+     * repositorio. Calcula el rank global de cada entrada en función del offset de la
+     * página solicitada para que la posición sea consistente entre páginas.
+     *
+     * Implementa RF07 — Leaderboard global paginado.
+     *
+     * @param filter filtros y paginación: trackId, categoryId, page, size
+     * @return página de LeaderboardEntryDTO con rank calculado y datos del piloto
+     */
     @Override
     public Page<LeaderboardEntryDTO> getLeaderboard(LeaderboardFilterDTO filter) {
         Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize());
@@ -30,6 +42,7 @@ public class LeaderboardService implements ILeaderboardService {
         return sessions.map(s -> toDTO(s, rankCounter[0]++));
     }
 
+    /** Mapea una TelemetrySession al DTO del leaderboard, anexando el rank global pre-calculado. */
     private LeaderboardEntryDTO toDTO(TelemetrySession session, int rank) {
         return new LeaderboardEntryDTO(
                 rank,

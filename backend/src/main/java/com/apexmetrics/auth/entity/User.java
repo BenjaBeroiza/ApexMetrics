@@ -41,6 +41,11 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Callback JPA invocado por el proveedor de persistencia justo antes de hacer INSERT.
+     * Inicializa la marca temporal de creación del usuario para evitar que la capa de servicio
+     * tenga que asignarla manualmente y garantizar que createdAt nunca sea null.
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

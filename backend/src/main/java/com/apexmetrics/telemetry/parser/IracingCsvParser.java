@@ -21,11 +21,32 @@ public class IracingCsvParser implements CsvParser {
     private static final Logger log = LoggerFactory.getLogger(IracingCsvParser.class);
     private static final List<String> REQUIRED_HEADERS = List.of("Distance", "Speed", "Brake", "Throttle");
 
+    /**
+     * Identifica este parser como la estrategia para archivos exportados desde iRacing.
+     * Es la clave usada por {@link com.apexmetrics.telemetry.service.TelemetryService}
+     * al elegir el parser adecuado para el simulador indicado por el cliente.
+     *
+     * @return el literal {@code "IRACING"}
+     */
     @Override
     public String getSimulatorType() {
         return "IRACING";
     }
 
+    /**
+     * Lee un CSV nativo de iRacing y lo convierte en TelemetryPoint internos.
+     * Asume la presencia de las cabeceras nativas {@code Distance}, {@code Speed},
+     * {@code Brake} y {@code Throttle}. Construye un índice por nombre para tolerar
+     * reordenamiento de columnas. Los errores se traducen a {@link CsvInvalidSchemaException}
+     * para que el handler global produzca un 400 con detalle.
+     *
+     * Contribuye a RF04 — Carga de telemetría CSV.
+     *
+     * @param file archivo CSV de iRacing recibido como multipart
+     * @return lista de TelemetryPoint con los puntos crudos del archivo (antes de downsampling)
+     * @throws CsvInvalidSchemaException si el archivo está vacío, falta una cabecera obligatoria
+     *                                   o la lectura falla
+     */
     @Override
     public List<TelemetryPoint> parse(MultipartFile file) {
         List<TelemetryPoint> points = new ArrayList<>();
@@ -58,6 +79,7 @@ public class IracingCsvParser implements CsvParser {
         return points;
     }
 
+    /** Construye un mapa cabecera→posición para acceso a columnas por nombre, tolerando reordenamiento. */
     private Map<String, Integer> buildHeaderIndex(String[] headers) {
         Map<String, Integer> map = new HashMap<>();
         for (int i = 0; i < headers.length; i++) {
@@ -66,6 +88,7 @@ public class IracingCsvParser implements CsvParser {
         return map;
     }
 
+    /** Verifica que estén todas las cabeceras nativas requeridas; lanza CsvInvalidSchemaException si falta alguna. */
     private void validateHeaders(Map<String, Integer> headerIndex) {
         for (String required : REQUIRED_HEADERS) {
             if (!headerIndex.containsKey(required)) {
@@ -74,6 +97,7 @@ public class IracingCsvParser implements CsvParser {
         }
     }
 
+    /** Lee una celda numérica de la fila por nombre de columna; retorna 0.0 si la celda está ausente o vacía. */
     private Double parseDouble(String[] row, Map<String, Integer> idx, String col) {
         int i = idx.get(col);
         if (i >= row.length || row[i].isBlank()) return 0.0;

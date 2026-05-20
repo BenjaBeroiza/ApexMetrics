@@ -25,6 +25,18 @@ public class AuthService implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Registra un nuevo usuario en el sistema.
+     * Verifica unicidad de email y username, cifra la contraseña con BCrypt
+     * (strength=12 configurado en {@link com.apexmetrics.shared.config.SecurityConfig}),
+     * persiste al usuario con rol PILOT y emite un JWT stateless para autenticación inmediata.
+     *
+     * Implementa RF01 — Registro de usuario.
+     *
+     * @param dto datos del registro (username, email, password, country) ya validados a nivel de controlador
+     * @return AuthResponseDTO con token JWT, expiración en ms, username y rol asignado
+     * @throws UserAlreadyExistsException si el email o username ya están registrados
+     */
     @Override
     public AuthResponseDTO register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
@@ -49,6 +61,17 @@ public class AuthService implements IAuthService {
         return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name());
     }
 
+    /**
+     * Autentica un usuario existente mediante email y contraseña.
+     * Busca al usuario por email, compara el password en claro contra el hash BCrypt
+     * almacenado y, si coinciden, genera un nuevo JWT con email y rol como claims.
+     *
+     * Implementa RF02 — Login de usuario.
+     *
+     * @param dto credenciales del usuario (email y password) ya validadas a nivel de controlador
+     * @return AuthResponseDTO con token JWT, expiración en ms, username y rol
+     * @throws CredentialException si el email no existe o si la contraseña no coincide con el hash
+     */
     @Override
     public AuthResponseDTO authenticate(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
