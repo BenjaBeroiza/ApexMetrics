@@ -43,12 +43,7 @@ public class AssettoCorsaCsvParser implements CsvParser {
             String[] row;
             int rowNum = 0;
             while ((row = reader.readNext()) != null) {
-                TelemetryPoint p = new TelemetryPoint();
-                p.setDistance((double) rowNum++);
-                p.setSpeed(parseDouble(row, headerIndex, "speedKmh"));
-                p.setBrake(parseDouble(row, headerIndex, "brake"));
-                p.setThrottle(parseDouble(row, headerIndex, "gas"));
-                points.add(p);
+                points.add(buildTelemetryPoint(row, headerIndex, rowNum++));
             }
         } catch (CsvInvalidSchemaException e) {
             throw e;
@@ -79,5 +74,13 @@ public class AssettoCorsaCsvParser implements CsvParser {
         int i = idx.get(col);
         if (i >= row.length || row[i].isBlank()) return 0.0;
         return Double.parseDouble(row[i].trim());
+    }
+    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum) {
+        TelemetryPoint p = new TelemetryPoint();
+        p.setDistance((double) rowNum);
+        p.setSpeed(parseDouble(row, headerIndex, "speedKmh"));
+        p.setBrake(parseDouble(row, headerIndex, "brake"));
+        p.setThrottle(parseDouble(row, headerIndex, "gas"));
+        return p;
     }
 }
