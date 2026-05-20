@@ -29,8 +29,9 @@ public class AssettoCorsaCsvParser implements CsvParser {
     @Override
     public List<TelemetryPoint> parse(MultipartFile file) {
         List<TelemetryPoint> points = new ArrayList<>();
-        try (CSVReader reader = new CSVReader(
-                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+        // DESPUÉS — el try queda así
+        // DESPUÉS — el try queda así
+        try (CSVReader reader = openCsvReader(file)) {
 
             String[] headers = reader.readNext();
             if (headers == null) {
@@ -82,5 +83,8 @@ public class AssettoCorsaCsvParser implements CsvParser {
         p.setBrake(parseDouble(row, headerIndex, "brake"));
         p.setThrottle(parseDouble(row, headerIndex, "gas"));
         return p;
+    }
+    private CSVReader openCsvReader(MultipartFile file) throws Exception {
+        return new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
     }
 }
