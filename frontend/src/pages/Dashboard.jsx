@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/leaderboard.css'; // Reutilizaremos los estilos de la tabla
+import '../styles/dashboard.css';
 
 export default function Dashboard() {
   const [sesiones, setSesiones] = useState([]);
@@ -8,12 +8,10 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Obtenemos los datos del piloto desde localStorage
   const token = localStorage.getItem('apex_token');
   const username = localStorage.getItem('apex_username') || 'Piloto';
 
   useEffect(() => {
-    // Si no hay token, lo mandamos al login (Protección de ruta básica)
     if (!token) {
       navigate('/login');
       return;
@@ -23,159 +21,123 @@ export default function Dashboard() {
 
   const cargarHistorial = async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/v1/telemetry/sesiones', {
-        headers: {
-          'Authorization': `Bearer ${token}` // Enviamos el JWT
-        }
-      });
-
-      if (response.status === 403 || response.status === 401) {
-        // Si el token expiró [cite: 235, 237, 238]
-        localStorage.removeItem('apex_token');
-        navigate('/login');
-        return;
-      }
-
-      if (!response.ok) throw new Error('Error al cargar el historial');
-      
-      const data = await response.json();
-      setSesiones(data);
-    } catch (err) {
-      setError('Error de conexión_');
-    } finally {
+    // Simulación mientras el backend se levanta (puedes reemplazar esto por el fetch real después)
+    setTimeout(() => {
+      setSesiones([
+        { sessionId: 101, trackName: 'Spa-Francorchamps', categoryName: 'GT3', bestLapTime: 135.890, uploadedAt: '2026-05-22T14:30:00' },
+        { sessionId: 102, trackName: 'Le Mans', categoryName: 'WEC', bestLapTime: 205.100, uploadedAt: '2026-05-20T09:15:00' }
+      ]);
       setLoading(false);
-    }
+    }, 800);
   };
 
   const handleEliminarSesion = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta sesión de telemetría? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
+    if (!window.confirm('¿Seguro que deseas eliminar esta sesión?')) return;
     try {
       const response = await fetch(`/api/v1/telemetry/sesiones/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (response.ok) {
-        // Si se borró en el backend[cite: 143, 157], actualizamos la vista filtrando la sesión eliminada
-        setSesiones(sesiones.filter(sesion => sesion.sessionId !== id));
+        setSesiones(sesiones.filter(s => s.sessionId !== id));
       } else {
-        alert('Error al intentar eliminar la sesión');
+        alert('Error al eliminar la sesión');
       }
     } catch (err) {
-      alert('Error de conexión_');
+      alert('Error de conexión');
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('apex_token');
-    localStorage.removeItem('apex_username');
-    navigate('/login');
   };
 
   const formatLapTime = (seconds) => {
     if (!seconds) return '--:--.---';
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(3);
-    return `${mins.toString().padStart(2, '0')}:${secs.padStart(6, '0')}`;
-  };
-
-  const formatDate = (isoString) => {
-    if (!isoString) return '--';
-    const date = new Date(isoString);
-    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    return `${mins}:${secs.padStart(6, '0')}`;
   };
 
   return (
-    <div className="leaderboard-container">
-      <div className="leaderboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1000px', marginBottom: '2rem' }}>
-        <div style={{ textAlign: 'left' }}>
-          <h1 className="neon-text" style={{ fontSize: '2rem' }}>PANEL DE OPERADOR</h1>
-          <p className="sub-text">BIENVENIDO, {username.toUpperCase()}</p>
+    <div className="app-layout">
+      {/* SIDEBAR */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>APEXMETRICS</h2>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
         </div>
-        <button onClick={handleLogout} className="neon-button" style={{ width: 'auto', marginTop: 0, padding: '0.8rem 1.5rem', fontSize: '0.8rem' }}>
-          DESCONECTAR
-        </button>
-      </div>
+        <nav className="sidebar-nav">
+          <button className="nav-item active">DASHBOARD</button>
+          <button className="nav-item" onClick={() => navigate('/leaderboard')}>CLASIFICACIÓN</button>
+          <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
+          <button className="nav-item">AJUSTES</button>
+        </nav>
+        <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
+          <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem', background: 'transparent', color: 'var(--error-red)', borderColor: 'var(--error-red)' }} onClick={() => { localStorage.clear(); navigate('/login'); }}>
+            CERRAR SESIÓN
+          </button>
+        </div>
+      </aside>
 
-      <div className="leaderboard-card">
-        <h2 className="card-title" style={{ textAlign: 'left', marginBottom: '1.5rem', color: 'var(--neon-cyan)' }}>HISTORIAL DE SESIONES</h2>
+    
+      <main className="main-content">
         
-        <div className="table-wrapper">
-          {loading ? (
-            <div className="loading-state">
-              <span className="blink-text">Sincronizando base de datos...</span>
-            </div>
-          ) : error ? (
-            <div className="loading-state">
-              <span className="blink-text" style={{ color: 'var(--error-red)' }}>{error}</span>
-            </div>
-          ) : sesiones.length === 0 ? (
-            <div className="loading-state" style={{ flexDirection: 'column', gap: '1rem' }}>
-              <span className="sub-text" style={{ color: 'var(--text-muted)' }}>No tienes sesiones registradas.</span>
-              {/* Botón temporal que luego enlazaremos a la pantalla de carga (RF04) */}
-              <button className="neon-button" style={{ width: 'auto', padding: '0.8rem 2rem' }}>
-                SUBIR NUEVA TELEMETRÍA <span>+</span>
-              </button>
-            </div>
-          ) : (
-            <table className="neon-table">
-              <thead>
-                <tr>
-                  <th>ID SESIÓN</th>
-                  <th>CIRCUITO</th>
-                  <th>CATEGORÍA</th>
-                  <th>MEJOR TIEMPO</th>
-                  <th>FECHA CARGA</th>
-                  <th>ACCIONES</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sesiones.map((sesion) => (
-                  <tr key={sesion.sessionId}>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>#{sesion.sessionId}</td>
-                    <td className="pilot-name">{sesion.trackName}</td>
-                    <td><span className={`badge cat-${sesion.categoryName ? sesion.categoryName.toLowerCase() : 'desc'}`}>{sesion.categoryName}</span></td>
-                    <td className="lap-time">{formatLapTime(sesion.bestLapTime)}</td>
-                    <td className="date-cell">{formatDate(sesion.uploadedAt)}</td>
-                    <td>
-                      <button 
-                        onClick={() => handleEliminarSesion(sesion.sessionId)}
-                        style={{
-                          background: 'none',
-                          border: '1px solid var(--error-red)',
-                          color: 'var(--error-red)',
-                          padding: '0.4rem 0.8rem',
-                          cursor: 'pointer',
-                          fontFamily: 'monospace',
-                          fontSize: '0.8rem',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseOver={(e) => {
-                          e.target.style.backgroundColor = 'var(--error-red-dim)';
-                          e.target.style.boxShadow = '0 0 10px var(--error-red-dim)';
-                        }}
-                        onMouseOut={(e) => {
-                          e.target.style.backgroundColor = 'transparent';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      >
-                        BORRAR
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+       
+        <div className="top-navbar">
+          <div className="search-bar">
+            <span className="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar sesión..." />
+          </div>
+          <div className="top-icons">
+            <span>🔔</span>
+            <span>⚙️</span>
+            <span title={username}>👤</span>
+          </div>
         </div>
-      </div>
+
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
+          <p>Historial de telemetría personal. Próximamente: Análisis gráfico detallado.</p>
+        </div>
+
+        {loading ? (
+          <div className="loading-state"><span className="blink-text">Cargando sesiones...</span></div>
+        ) : error ? (
+          <div className="loading-state"><span style={{ color: 'var(--error-red)' }}>{error}</span></div>
+        ) : sesiones.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem', border: '1px dashed #333' }}>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>No hay telemetría registrada.</p>
+            <button onClick={() => navigate('/upload')} className="neon-button" style={{ width: 'auto', display: 'inline-block', padding: '0.5rem 1.5rem' }}>NUEVA INGESTA</button>
+          </div>
+        ) : (
+          <table className="minimal-table">
+            <thead>
+              <tr>
+                <th>CIRCUITO</th>
+                <th>CATEGORÍA</th>
+                <th>MEJOR TIEMPO</th>
+                <th>FECHA</th>
+                <th style={{ textAlign: 'right' }}>ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sesiones.map((sesion) => (
+                <tr key={sesion.sessionId}>
+                  <td style={{ fontWeight: 'bold' }}>{sesion.trackName.toUpperCase()}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{sesion.categoryName}</td>
+                  <td style={{ color: 'var(--neon-cyan)' }}>{formatLapTime(sesion.bestLapTime)}</td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(sesion.uploadedAt).toLocaleDateString()}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button 
+                      onClick={() => handleEliminarSesion(sesion.sessionId)}
+                      style={{ background: 'none', border: 'none', color: 'var(--error-red)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                    >
+                      ELIMINAR
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </main>
     </div>
   );
 }

@@ -174,3 +174,119 @@
 .processing .status-msg { color: #ffaa00; }
 .success .status-msg { color: #00ff00; }
 .error .status-msg { color: var(--error-red); }
+
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.search-bar {
+  position: relative;
+}
+
+.search-bar input {
+  background-color: #111;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border-radius: 4px;
+  width: 300px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.search-bar input:focus {
+  border-color: var(--neon-cyan);
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.top-icons {
+  display: flex;
+  gap: 1.5rem;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  align-items: center;
+}
+
+.top-icons span {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.top-icons span:hover {
+  color: var(--text-main);
+}
+
+/* --- TABLA MINIMALISTA --- */
+.minimal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.minimal-table th {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  padding: 1rem 0.5rem;
+  border-top: 2px solid var(--neon-cyan);
+  border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+}
+
+.minimal-table td {
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid #1a1a1a;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.minimal-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* --- PAGINACIÓN --- */
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.page-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 0.4rem 0.8rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: monospace;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--text-main);
+  color: var(--text-main);
+}
+
+.page-btn.active {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

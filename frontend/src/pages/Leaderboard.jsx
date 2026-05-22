@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
-import '../styles/leaderboard.css';
+import { useNavigate } from 'react-router-dom';
+import '../styles/dashboard.css';
 
 export default function Leaderboard() {
+  const navigate = useNavigate();
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(0);
   
-  // Filtros
-  const [filters, setFilters] = useState({ categoryId: '', trackId: '' });
+  
+  const [filters, setFilters] = useState({ categoryId: '', trackId: '', page: 0 });
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -15,25 +18,21 @@ export default function Leaderboard() {
       setError(null);
       
       try {
-        // Construimos los query parameters solo si tienen un valor seleccionado
         const params = new URLSearchParams();
         if (filters.categoryId) params.append('categoryId', filters.categoryId);
         if (filters.trackId) params.append('trackId', filters.trackId);
+        params.append('page', filters.page);
+        params.append('size', 10); // 10 resultados por página
         
         const response = await fetch(`/api/v1/leaderboard?${params.toString()}`);
-        
-        if (!response.ok) {
-          throw new Error('Fallo al obtener la telemetría');
-        }
+        if (!response.ok) throw new Error('Fallo al obtener la clasificación');
         
         const data = await response.json();
-        
-        // El backend de Spring devuelve un Page<T>, los datos vienen en data.content
         setLeaderboardData(data.content || []);
+        setTotalPages(data.totalPages || 1);
       } catch (err) {
-        console.error("Error al cargar el leaderboard:", err);
-        setError("Error de conexión_");
-        setLeaderboardData([]); // Limpiamos la tabla en caso de error
+        setError("Error de conexión con el servidor");
+        setLeaderboardData([]);
       } finally {
         setLoading(false);
       }
@@ -43,105 +42,128 @@ export default function Leaderboard() {
   }, [filters]);
 
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    setFilters({ ...filters, [e.target.name]: e.target.value, page: 0 }); // Volver a pág 0 al filtrar
   };
 
-  // Función para formatear segundos (ej: 70.450 -> 01:10.450)
+  const handlePageChange = (newPage) => {
+    setFilters({ ...filters, page: newPage });
+  };
+
   const formatLapTime = (seconds) => {
     if (!seconds) return '--:--.---';
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(3);
-    return `${mins.toString().padStart(2, '0')}:${secs.padStart(6, '0')}`;
-  };
-
-
-  const formatDate = (isoString) => {
-    if (!isoString) return '--';
-    const date = new Date(isoString);
-    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `${mins}:${secs.padStart(6, '0')}`;
   };
 
   return (
-    <div className="leaderboard-container">
-      <div className="leaderboard-header">
-        <h1 className="neon-text">GLOBAL LEADERBOARD</h1>
-        <p className="sub-text">LIVE TELEMETRY RANKINGS</p>
-      </div>
+    <div className="app-layout">
+    
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>APEXMETRICS</h2>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+        </div>
+        <nav className="sidebar-nav">
+          <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
+          <button className="nav-item active">CLASIFICACIÓN</button>
+          <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
+          <button className="nav-item">AJUSTES</button>
+        </nav>
+        <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
+          <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem' }} onClick={() => setFilters({...filters})}>
+            ↻ SINCRONIZAR DATOS
+          </button>
+        </div>
+      </aside>
 
-      <div className="leaderboard-card">
+
+      <main className="main-content">
         
-        {/* SECCIÓN DE FILTROS */}
-        <div className="filters-section">
-          <div className="filter-group">
-            <label>CATEGORÍA</label>
-            <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="neon-select">
-              <option value="">Todas las Categorías</option>
-              {/* Estos values deben coincidir con los IDs reales de tu tabla 'categories' */}
-              <option value="1">F1</option>
-              <option value="2">GT3</option>
-              <option value="3">WEC</option>
-            </select>
+        {/* TOP NAVBAR */}
+        <div className="top-navbar">
+          <div className="search-bar">
+            <span className="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar piloto..." />
           </div>
-          
-          <div className="filter-group">
-            <label>CIRCUITO</label>
-            <select name="trackId" value={filters.trackId} onChange={handleFilterChange} className="neon-select">
-              <option value="">Todos los Circuitos</option>
-              {/* Estos values deben coincidir con los IDs reales de tu tabla 'tracks' */}
-              <option value="1">Interlagos</option>
-              <option value="2">Spa-Francorchamps</option>
-              <option value="3">Le Mans</option>
-            </select>
+          <div className="top-icons">
+            <span>🔔</span>
+            <span>⚙️</span>
+            <span>👤</span>
           </div>
         </div>
 
-        {/* TABLA DE RESULTADOS */}
-        <div className="table-wrapper">
-          {loading ? (
-            <div className="loading-state">
-              <span className="blink-text">RECIBIENDO DATOS...</span>
-            </div>
-          ) : error ? (
-            <div className="loading-state">
-              <span className="blink-text" style={{ color: 'var(--error-red)' }}>{error}</span>
-            </div>
-          ) : leaderboardData.length === 0 ? (
-            <div className="loading-state">
-              <span className="sub-text" style={{ color: 'var(--text-muted)' }}>NO HAY REGISTROS DISPONIBLES</span>
-            </div>
-          ) : (
-            <table className="neon-table">
+        <div className="page-header" style={{ marginBottom: '1.5rem' }}>
+          <h1>CLASIFICACIÓN GLOBAL</h1>
+          <p style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem', letterSpacing: '1px' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', background: 'var(--neon-cyan)', borderRadius: '50%', marginRight: '8px' }}></span>
+            LIVE TELEMETRY FEED
+          </p>
+        </div>
+
+        {/* FILTROS SUTILES */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+          <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="neon-select" style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
+            <option value="">Todas las Categorías</option>
+            <option value="1">F1</option>
+            <option value="2">GT3</option>
+            <option value="3">WEC</option>
+          </select>
+          <select name="trackId" value={filters.trackId} onChange={handleFilterChange} className="neon-select" style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
+            <option value="">Todos los Circuitos</option>
+            <option value="1">Interlagos</option>
+            <option value="2">Spa-Francorchamps</option>
+            <option value="3">Le Mans</option>
+          </select>
+        </div>
+
+        {/* TABLA */}
+        {loading ? (
+          <div className="loading-state"><span className="blink-text">Sincronizando...</span></div>
+        ) : error ? (
+          <div className="loading-state"><span style={{ color: 'var(--error-red)' }}>{error}</span></div>
+        ) : (
+          <>
+            <table className="minimal-table">
               <thead>
                 <tr>
-                  <th>POS</th>
-                  <th>PILOTO</th>
-                  <th>PAÍS</th>
-                  <th>CIRCUITO</th>
-                  <th>CAT</th>
-                  <th>MEJOR TIEMPO</th>
-                  <th>FECHA</th>
+                  <th style={{ width: '10%' }}>POS</th>
+                  <th style={{ width: '40%' }}>PILOTO</th>
+                  <th style={{ width: '30%' }}>TIEMPO DE VUELTA</th>
+                  <th style={{ width: '20%', textAlign: 'right' }}>CATEGORÍA</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboardData.map((entry) => (
-                  <tr key={`${entry.username}-${entry.uploadedAt}`} className={entry.rank <= 3 ? `top-${entry.rank}` : ''}>
-                    <td className="rank-cell">
-                      {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
-                    </td>
-                    <td className="pilot-name">{entry.username}</td>
-                    <td>{entry.country || '--'}</td>
-                    <td>{entry.trackName}</td>
-                    <td><span className={`badge cat-${entry.categoryName ? entry.categoryName.toLowerCase() : 'desconocida'}`}>{entry.categoryName}</span></td>
-                    <td className="lap-time">{formatLapTime(entry.bestLapTime)}</td>
-                    <td className="date-cell">{formatDate(entry.uploadedAt)}</td>
+                  <tr key={`${entry.username}-${entry.uploadedAt}`}>
+                    <td style={{ color: 'var(--neon-cyan)' }}>{entry.rank}</td>
+                    <td style={{ fontWeight: 'bold' }}>{entry.username.toUpperCase()}</td>
+                    <td style={{ color: 'var(--neon-cyan)' }}>{formatLapTime(entry.bestLapTime)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{entry.categoryName}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
 
-      </div>
+            {/* CONTROLES DE PAGINACIÓN */}
+            <div className="pagination">
+              <button 
+                className="page-btn" 
+                disabled={filters.page === 0} 
+                onClick={() => handlePageChange(filters.page - 1)}
+              >&lt;</button>
+              
+              <button className="page-btn active">{filters.page + 1}</button>
+              
+              <button 
+                className="page-btn" 
+                disabled={filters.page >= totalPages - 1} 
+                onClick={() => handlePageChange(filters.page + 1)}
+              >&gt;</button>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   );
 }
