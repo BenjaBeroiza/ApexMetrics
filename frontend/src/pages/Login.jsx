@@ -29,9 +29,12 @@ export default function Login() {
         body: JSON.stringify(formData)
       });
 
-      if (response.ok) {
+     if (response.ok) {
         const data = await response.json();
         console.log('Token recibido:', data.token);
+        localStorage.setItem('apex_token', data.token);
+        localStorage.setItem('apex_username', data.username);
+        window.location.href = '/dashboard';
       } else {
         setError('Error: Credenciales inválidas');
       }
