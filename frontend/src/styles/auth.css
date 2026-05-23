@@ -1,0 +1,212 @@
+/* src/styles/auth.css */
+
+/* Variables de color */
+:root {
+  --bg-dark: #111111;
+  --bg-card: #1c1c1c;
+  --neon-cyan: #00ffff;
+  --neon-cyan-dim: rgba(0, 255, 255, 0.2);
+  --error-red: #ff6b6b;
+  --error-red-dim: rgba(255, 107, 107, 0.2);
+  --text-main: #ffffff;
+  --text-muted: #888888;
+  --border-color: #333333;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+}
+
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem; /* Espaciado por si se ve en pantallas chicas */
+}
+
+/* --- HEADER MÁS GRANDE --- */
+.auth-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.neon-text {
+  color: var(--neon-cyan);
+  font-size: 2.5rem; /* Aumentado de 1.5rem */
+  letter-spacing: 4px; /* Aumentado para más estilo */
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 15px var(--neon-cyan-dim);
+}
+
+.sub-text {
+  color: var(--text-muted);
+  font-size: 1.1rem; /* Aumentado de 0.8rem */
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+/* --- TARJETA MÁS ANCHA --- */
+.auth-card {
+  background-color: var(--bg-card);
+  border-top: 4px solid var(--neon-cyan);
+  padding: 3rem; /* Aumentado de 2rem */
+  width: 100%;
+  max-width: 550px; /* Aumentado de 400px */
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+
+.card-title {
+  text-align: center;
+  font-size: 1.3rem; /* Aumentado de 1rem */
+  letter-spacing: 2px;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+}
+
+/* --- INPUTS Y LABELS MÁS LEGIBLES --- */
+.input-group {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem; /* Separación entre label e input */
+}
+
+.input-group label {
+  font-size: 0.9rem; /* Aumentado de 0.75rem */
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+}
+
+.input-group label.text-error {
+  color: var(--error-red);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 1.1rem; /* Letra del input más grande */
+  padding: 1.2rem 3rem 1.2rem 1.5rem; /* Input más "gordito" */
+  font-family: monospace;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px var(--neon-cyan-dim);
+}
+
+/* Estados de Éxito y Error */
+.input-wrapper.success input {
+  border-color: var(--neon-cyan);
+}
+.icon-success {
+  position: absolute;
+  right: 1.2rem;
+  color: var(--neon-cyan);
+  font-size: 1.2rem;
+}
+
+.input-wrapper.error input {
+  border-color: var(--error-red);
+  box-shadow: 0 0 12px var(--error-red-dim);
+}
+.icon-error {
+  position: absolute;
+  right: 1.2rem;
+  color: var(--error-red);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.error-message {
+  color: var(--error-red);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* --- BOTÓN MÁS LLAMATIVO --- */
+.neon-button {
+  width: 100%;
+  background-color: black;
+  color: var(--neon-cyan);
+  border: 1px solid var(--neon-cyan);
+  font-size: 1.1rem; /* Texto del botón más grande */
+  padding: 1.2rem; /* Botón más alto */
+  font-weight: bold;
+  letter-spacing: 3px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.3s ease;
+  margin-top: 2.5rem;
+}
+
+.neon-button:hover:not(:disabled) {
+  background-color: var(--neon-cyan-dim);
+  box-shadow: 0 0 20px var(--neon-cyan-dim);
+}
+
+.neon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- ENLACES Y FOOTER --- */
+.auth-form a {
+  font-size: 0.9rem !important; /* Forza el tamaño del link de registro */
+  transition: color 0.3s ease;
+}
+
+.auth-form a:hover {
+  color: var(--neon-cyan) !important;
+  text-shadow: 0 0 8px var(--neon-cyan-dim);
+}
+
+.auth-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.status-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: #333;
+  border-radius: 50%;
+}
+.dot.active {
+  background-color: var(--error-red);
+  box-shadow: 0 0 8px var(--error-red);
+}
+
+.secure-text {
+  font-size: 0.85rem;
+  color: #666;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
