@@ -62,7 +62,7 @@ export default function Leaderboard() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
@@ -97,7 +97,7 @@ export default function Leaderboard() {
           <h1>CLASIFICACIÓN GLOBAL</h1>
           <p style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem', letterSpacing: '1px' }}>
             <span style={{ display: 'inline-block', width: '8px', height: '8px', background: 'var(--neon-cyan)', borderRadius: '50%', marginRight: '8px' }}></span>
-            LIVE TELEMETRY FEED
+            TABLA DE POSICIONES
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export default function Leaderboard() {
 
         {/* TABLA */}
         {loading ? (
-          <div className="loading-state"><span className="blink-text">Sincronizando...</span></div>
+          <div className="loading-state"><span className="blink-text">Cargando clasificación...</span></div>
         ) : error ? (
           <div className="loading-state"><span style={{ color: 'var(--error-red)' }}>{error}</span></div>
         ) : (

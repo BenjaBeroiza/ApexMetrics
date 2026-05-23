@@ -61,7 +61,7 @@ export default function Dashboard() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item active">DASHBOARD</button>
@@ -94,7 +94,7 @@ export default function Dashboard() {
 
         <div className="page-header" style={{ marginBottom: '2rem' }}>
           <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
-          <p>Historial de telemetría personal. Próximamente: Análisis gráfico detallado.</p>
+          <p>Historial de sesiones de telemetría personal.</p>
         </div>
 
         {loading ? (
@@ -103,8 +103,8 @@ export default function Dashboard() {
           <div className="loading-state"><span style={{ color: 'var(--error-red)' }}>{error}</span></div>
         ) : sesiones.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem', border: '1px dashed #333' }}>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>No hay telemetría registrada.</p>
-            <button onClick={() => navigate('/upload')} className="neon-button" style={{ width: 'auto', display: 'inline-block', padding: '0.5rem 1.5rem' }}>NUEVA INGESTA</button>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>No hay sesiones registradas aún.</p>
+            <button onClick={() => navigate('/upload')} className="neon-button" style={{ width: 'auto', display: 'inline-block', padding: '0.5rem 1.5rem' }}>NUEVA SESIÓN</button>
           </div>
         ) : (
           <table className="minimal-table">

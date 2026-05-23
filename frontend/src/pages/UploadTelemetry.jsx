@@ -72,7 +72,7 @@ export default function UploadTelemetry() {
         throw new Error(errData.message || 'FALLÓ LA VALIDACIÓN DEL ARCHIVO');
       }
 
-      setUploadState({ status: 'success', message: 'ÉXITO - ANALIZADO 100%' });
+      setUploadState({ status: 'success', message: 'SESIÓN REGISTRADA CORRECTAMENTE' });
       
       // Limpieza tras éxito
       setTimeout(() => {
@@ -92,7 +92,7 @@ export default function UploadTelemetry() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
@@ -105,7 +105,7 @@ export default function UploadTelemetry() {
       {/* ÁREA PRINCIPAL */}
       <main className="main-content">
         <div className="page-header">
-          <h1>Ingesta de Datos</h1>
+          <h1>SUBIR TELEMETRÍA</h1>
           <p>Configure los metadatos de la sesión y seleccione el archivo de registro generado por su simulador. El motor de análisis procesará automáticamente los canales de datos para su visualización en el dashboard.</p>
         </div>
 
@@ -139,7 +139,7 @@ export default function UploadTelemetry() {
               </select>
             </div>
             <div className="input-group">
-              <label>MEJOR TIEMPO (S)</label>
+              <label>MEJOR VUELTA (seg)</label>
               <input type="number" step="0.001" name="bestLapTime" value={formData.bestLapTime} onChange={handleChange} className="neon-select" placeholder="Ej. 70.450" required />
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function UploadTelemetry() {
           </div>
 
           <button type="submit" className="neon-button" disabled={uploadState.status === 'processing'} style={{ padding: '1rem', marginTop: 0 }}>
-            {uploadState.status === 'processing' ? 'SINCRONIZANDO...' : 'INICIAR INGESTA'}
+            {uploadState.status === 'processing' ? 'PROCESANDO...' : 'ENVIAR SESIÓN'}
           </button>
         </form>
 
@@ -169,7 +169,7 @@ export default function UploadTelemetry() {
         {uploadState.status !== 'idle' && (
           <div className="upload-status-area">
             <div className="status-header">
-              <span>COLA DE INGESTIÓN ACTIVA</span>
+              <span>ESTADO DE LA CARGA</span>
               <span>1 Archivo</span>
             </div>
             <div className={`status-item ${uploadState.status}`}>

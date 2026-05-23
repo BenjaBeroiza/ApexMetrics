@@ -31,7 +31,6 @@ export default function Login() {
 
      if (response.ok) {
         const data = await response.json();
-        console.log('Token recibido:', data.token);
         localStorage.setItem('apex_token', data.token);
         localStorage.setItem('apex_username', data.username);
         window.location.href = '/dashboard';
@@ -48,21 +47,21 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-header">
-        <h1 className="neon-text">APEXMETRICS</h1>
-        <p className="sub-text">ENGINEERING V2.0</p>
+        <h1 className="neon-text">ApexMetrics</h1>
+        <p className="sub-text">Plataforma de Análisis de Telemetría</p>
       </div>
 
       <div className="auth-card">
-        <h2 className="card-title">AUTENTICACIÓN</h2>
+        <h2 className="card-title">INICIAR SESIÓN</h2>
         
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>ID OPERADOR (CORREO)</label>
+            <label>Correo</label>
             <div className="input-wrapper success">
               <input 
                 type="email" 
                 name="email"
-                placeholder="dtaylor@apex.sim"
+                placeholder="correo@ejemplo.com"
                 value={formData.email}
                 onChange={handleChange}
                 required 
@@ -72,12 +71,12 @@ export default function Login() {
           </div>
 
           <div className="input-group">
-            <label className={error ? 'text-error' : ''}>CLAVE DE AUTORIZACIÓN</label>
+            <label className={error ? 'text-error' : ''}>Contraseña</label>
             <div className={`input-wrapper ${error ? 'error' : ''}`}>
               <input 
                 type="password" 
                 name="password"
-                placeholder="........"
+                placeholder="Mínimo 16 caracteres"
                 value={formData.password}
                 onChange={handleChange}
                 required 
@@ -93,7 +92,7 @@ export default function Login() {
           
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <Link to="/register" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none' }}>
-              ¿NUEVO OPERADOR? SOLICITAR ACCESO
+              ¿No tienes cuenta? Regístrate aquí
             </Link>
           </div>
         </form>
@@ -104,7 +103,7 @@ export default function Login() {
             <span className="dot"></span>
             <span className="dot"></span>
           </div>
-          <span className="secure-text">SECURE CONN_</span>
+          <span className="secure-text">CONEXIÓN SEGURA</span>
         </div>
       </div>
     </div>

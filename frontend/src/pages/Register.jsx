@@ -40,9 +40,7 @@ export default function Register() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Operador registrado:', data.username);
-        // Aquí podrías redirigir al dashboard o al login
+        navigate('/login');
       } else {
         const errData = await response.json();
         setError(errData.message || 'Error en el registro');
@@ -57,21 +55,21 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-header">
-        <h1 className="neon-text">APEXMETRICS</h1>
-        <p className="sub-text">ENGINEERING V2.0</p>
+        <h1 className="neon-text">ApexMetrics</h1>
+        <p className="sub-text">Plataforma de Análisis de Telemetría</p>
       </div>
 
       <div className="auth-card">
-        <h2 className="card-title">REGISTRO DE OPERADOR</h2>
+        <h2 className="card-title">CREAR CUENTA</h2>
         
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>NOMBRE CLAVE / ALIAS</label>
+            <label>NOMBRE DE USUARIO</label>
             <div className="input-wrapper">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="username"
-                placeholder="Ej. Piloto 1"
+                placeholder="Ej. JohnDoe"
                 value={formData.username}
                 onChange={handleChange}
                 required 
@@ -80,12 +78,12 @@ export default function Register() {
           </div>
 
           <div className="input-group">
-            <label>ID OPERADOR (CORREO)</label>
+            <label>CORREO ELECTRÓNICO</label>
             <div className="input-wrapper">
-              <input 
-                type="email" 
+              <input
+                type="email"
                 name="email"
-                placeholder="nuevo@apex.sim"
+                placeholder="correo@ejemplo.com"
                 value={formData.email}
                 onChange={handleChange}
                 required 
@@ -94,7 +92,7 @@ export default function Register() {
           </div>
 
           <div className="input-group">
-            <label>NUEVA CLAVE DE AUTORIZACIÓN</label>
+            <label>CONTRASEÑA</label>
             <div className={`input-wrapper ${error && error.includes('16') ? 'error' : ''}`}>
               <input 
                 type="password" 
@@ -108,12 +106,12 @@ export default function Register() {
           </div>
 
           <div className="input-group">
-            <label>CONFIRMAR CLAVE</label>
+            <label>CONFIRMAR CONTRASEÑA</label>
             <div className={`input-wrapper ${error && error.includes('coinciden') ? 'error' : ''}`}>
               <input 
                 type="password" 
                 name="confirmPassword"
-                placeholder="Repetir clave"
+                placeholder="Repite tu contraseña"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required 
@@ -123,12 +121,12 @@ export default function Register() {
           </div>
 
           <button type="submit" className="neon-button" disabled={loading}>
-            {loading ? 'PROCESANDO...' : 'SOLICITAR ACCESO'} <span>→</span>
+            {loading ? 'PROCESANDO...' : 'CREAR CUENTA'} <span>→</span>
           </button>
 
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <Link to="/login" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none' }}>
-              ¿YA TIENES ACCESO? INICIAR SESIÓN
+              ¿Ya tienes cuenta? Inicia sesión
             </Link>
           </div>
         </form>
@@ -139,7 +137,7 @@ export default function Register() {
             <span className="dot active"></span>
             <span className="dot"></span>
           </div>
-          <span className="secure-text">ENCRYPTING_</span>
+          <span className="secure-text">CONEXIÓN SEGURA</span>
         </div>
       </div>
     </div>
