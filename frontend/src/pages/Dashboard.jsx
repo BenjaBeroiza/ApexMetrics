@@ -21,14 +21,23 @@ export default function Dashboard() {
 
   const cargarHistorial = async () => {
     setLoading(true);
-    // Simulación mientras el backend se levanta (puedes reemplazar esto por el fetch real después)
-    setTimeout(() => {
-      setSesiones([
-        { sessionId: 101, trackName: 'Spa-Francorchamps', categoryName: 'GT3', bestLapTime: 135.890, uploadedAt: '2026-05-22T14:30:00' },
-        { sessionId: 102, trackName: 'Le Mans', categoryName: 'WEC', bestLapTime: 205.100, uploadedAt: '2026-05-20T09:15:00' }
-      ]);
+    setError(null);
+    try {
+      const response = await fetch('/api/v1/telemetry/sesiones', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.status === 401) {
+        navigate('/login');
+        return;
+      }
+      if (!response.ok) throw new Error('Error al cargar las sesiones');
+      const data = await response.json();
+      setSesiones(data);
+    } catch (err) {
+      setError('No se pudo conectar con el servidor.');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleEliminarSesion = async (id) => {
