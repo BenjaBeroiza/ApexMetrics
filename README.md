@@ -141,8 +141,7 @@ Base URL: `http://localhost:8080/api/v1`
 {
   "username": "string",
   "email": "string",
-  "password": "string (mínimo 16 caracteres)",
-  "country": "string"
+  "password": "string (mínimo 16 caracteres)"
 }
 ```
 
