@@ -2,6 +2,41 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/dashboard.css';
 
+/**
+ * Opciones de circuito disponibles en el filtro del leaderboard.
+ *
+ * El `id` debe coincidir con la fila correspondiente en la tabla `tracks` de
+ * PostgreSQL, sembrada por la migración Flyway V1__init_schema.sql. Si se
+ * envía un id que no existe, el endpoint GET /api/v1/leaderboard ignora el
+ * filtro o retorna vacío según el caso.
+ *
+ * Fuente de verdad: backend/src/main/resources/db/migration/V1__init_schema.sql
+ */
+const TRACK_OPTIONS = [
+  { id: 1, label: 'Autodromo Nazionale di Monza' },
+  { id: 2, label: 'Circuit de Spa-Francorchamps' },
+  { id: 3, label: 'Nürburgring Nordschleife' },
+  { id: 4, label: 'Circuit de Catalunya' },
+  { id: 5, label: 'Autodromo Enzo e Dino Ferrari' }
+];
+
+/**
+ * Opciones de categoría disponibles en el filtro del leaderboard.
+ *
+ * Los ids son discontinuos (1, 3, 4) porque la migración V2__update_categories.sql
+ * borra GT4 (id=2) y TCR (id=5) y renombra Formula 2 → F1 e Hypercar → WEC
+ * conservando sus ids originales (3 y 4).
+ *
+ * Fuente de verdad:
+ *  - V1__init_schema.sql       (siembra inicial)
+ *  - V2__update_categories.sql (DELETE + UPDATE que dejan ids 1, 3, 4)
+ */
+const CATEGORY_OPTIONS = [
+  { id: 1, label: 'GT3' },
+  { id: 3, label: 'F1' },
+  { id: 4, label: 'WEC' }
+];
+
 export default function Leaderboard() {
   const navigate = useNavigate();
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -105,15 +140,15 @@ export default function Leaderboard() {
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
           <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="neon-select" style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
             <option value="">Todas las Categorías</option>
-            <option value="1">F1</option>
-            <option value="2">GT3</option>
-            <option value="3">WEC</option>
+            {CATEGORY_OPTIONS.map(c => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
           </select>
           <select name="trackId" value={filters.trackId} onChange={handleFilterChange} className="neon-select" style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
             <option value="">Todos los Circuitos</option>
-            <option value="1">Interlagos</option>
-            <option value="2">Spa-Francorchamps</option>
-            <option value="3">Le Mans</option>
+            {TRACK_OPTIONS.map(t => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
           </select>
         </div>
 
