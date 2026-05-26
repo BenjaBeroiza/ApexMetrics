@@ -2,6 +2,41 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/dashboard.css';
 
+/**
+ * Opciones de circuito que se ofrecen al piloto en el formulario de carga.
+ *
+ * El `id` debe coincidir EXACTAMENTE con la fila correspondiente en la tabla
+ * `tracks` de PostgreSQL, sembrada por la migración Flyway V1__init_schema.sql.
+ * Si el id no existe en backend, el endpoint POST /api/v1/telemetry/upload
+ * responderá 400 con "Circuito no encontrado".
+ *
+ * Fuente de verdad: backend/src/main/resources/db/migration/V1__init_schema.sql
+ */
+const TRACK_OPTIONS = [
+  { id: 1, label: 'Autodromo Nazionale di Monza' },
+  { id: 2, label: 'Circuit de Spa-Francorchamps' },
+  { id: 3, label: 'Nürburgring Nordschleife' },
+  { id: 4, label: 'Circuit de Catalunya' },
+  { id: 5, label: 'Autodromo Enzo e Dino Ferrari' }
+];
+
+/**
+ * Opciones de categoría que se ofrecen al piloto en el formulario de carga.
+ *
+ * Los ids son discontinuos (1, 3, 4) porque la migración V2__update_categories.sql
+ * elimina las filas originales con id 2 (GT4) e id 5 (TCR) y renombra Formula 2 → F1
+ * y Hypercar → WEC manteniendo sus ids originales (3 y 4 respectivamente).
+ *
+ * Fuente de verdad:
+ *  - V1__init_schema.sql       (siembra inicial)
+ *  - V2__update_categories.sql (DELETE + UPDATE que dejan ids 1, 3, 4)
+ */
+const CATEGORY_OPTIONS = [
+  { id: 1, label: 'GT3' },
+  { id: 3, label: 'F1' },
+  { id: 4, label: 'WEC' }
+];
+
 export default function UploadTelemetry() {
   const navigate = useNavigate();
   const token = localStorage.getItem('apex_token');
@@ -124,18 +159,18 @@ export default function UploadTelemetry() {
               <label>CIRCUITO</label>
               <select name="trackId" value={formData.trackId} onChange={handleChange} className="neon-select" required>
                 <option value="">Seleccione circuito...</option>
-                <option value="1">Interlagos</option>
-                <option value="2">Spa-Francorchamps</option>
-                <option value="3">Le Mans</option>
+                {TRACK_OPTIONS.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
               </select>
             </div>
             <div className="input-group">
               <label>CATEGORÍA</label>
               <select name="categoryId" value={formData.categoryId} onChange={handleChange} className="neon-select" required>
                 <option value="">Seleccione categoría...</option>
-                <option value="1">F1</option>
-                <option value="2">GT3</option>
-                <option value="3">WEC</option>
+                {CATEGORY_OPTIONS.map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
               </select>
             </div>
             <div className="input-group">
