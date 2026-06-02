@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -142,6 +143,140 @@ class TelemetryServiceTest {
         List<TelemetryPoint> points = buildPoints(10_000);
         List<TelemetryPoint> result = telemetryService.downsample(points);
         assertThat(result).hasSize(10_000);
+    }
+
+    // ── RF04: Casos de error en uploadSession ─────────────────
+
+    @Test
+    @DisplayName("RF04 — uploadSession con circuito inexistente lanza IllegalArgumentException")
+    void uploadSession_trackNoExiste_lanzaExcepcion() {
+        List<TelemetryPoint> points = buildPoints(10);
+        when(mockParser.parse(any())).thenReturn(points);
+        when(trackRepository.findById(99L)).thenReturn(Optional.empty());
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
+
+        assertThatThrownBy(() -> telemetryService.uploadSession(
+                file, 99L, 1L, "IRACING", "piloto@apexmetrics.com", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Circuito no encontrado");
+    }
+
+    @Test
+    @DisplayName("RF04 — uploadSession con categoría inexistente lanza IllegalArgumentException")
+    void uploadSession_categoriaNoExiste_lanzaExcepcion() {
+        List<TelemetryPoint> points = buildPoints(10);
+        when(mockParser.parse(any())).thenReturn(points);
+        when(trackRepository.findById(1L)).thenReturn(Optional.of(track));
+        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
+
+        assertThatThrownBy(() -> telemetryService.uploadSession(
+                file, 1L, 99L, "IRACING", "piloto@apexmetrics.com", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Categoría no encontrada");
+    }
+
+    @Test
+    @DisplayName("RF04 — uploadSession con usuario inexistente lanza IllegalArgumentException")
+    void uploadSession_usuarioNoExiste_lanzaExcepcion() {
+        List<TelemetryPoint> points = buildPoints(10);
+        when(mockParser.parse(any())).thenReturn(points);
+        when(trackRepository.findById(1L)).thenReturn(Optional.of(track));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(userRepository.findByEmail("desconocido@test.com")).thenReturn(Optional.empty());
+
+        MockMultipartFile file = new MockMultipartFile("file", "test.csv", "text/csv", new byte[0]);
+
+        assertThatThrownBy(() -> telemetryService.uploadSession(
+                file, 1L, 1L, "IRACING", "desconocido@test.com", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Usuario no encontrado");
+    }
+
+    // ── RF05: Historial de sesiones ───────────────────────────
+
+    @Test
+    @DisplayName("RF05 — obtenerHistorial retorna lista de sesiones del usuario")
+    void obtenerHistorial_usuarioExistente_retornaListaDeSesiones() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).bestLapTime(85.4).build();
+
+        when(userRepository.findByEmail("piloto@apexmetrics.com")).thenReturn(Optional.of(user));
+        when(sessionRepository.findByUserId(1L)).thenReturn(List.of(sesion));
+
+        List<SessionSummaryDTO> resultado = telemetryService.obtenerHistorial("piloto@apexmetrics.com");
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getSessionId()).isEqualTo(10L);
+        assertThat(resultado.get(0).getTrackName()).isEqualTo("Monza");
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerHistorial con usuario inexistente lanza IllegalArgumentException")
+    void obtenerHistorial_usuarioNoExiste_lanzaExcepcion() {
+        when(userRepository.findByEmail("nadie@test.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> telemetryService.obtenerHistorial("nadie@test.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Usuario no encontrado");
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerHistorial retorna lista vacía si el usuario no tiene sesiones")
+    void obtenerHistorial_sinSesiones_retornaListaVacia() {
+        when(userRepository.findByEmail("piloto@apexmetrics.com")).thenReturn(Optional.of(user));
+        when(sessionRepository.findByUserId(1L)).thenReturn(List.of());
+
+        List<SessionSummaryDTO> resultado = telemetryService.obtenerHistorial("piloto@apexmetrics.com");
+
+        assertThat(resultado).isEmpty();
+    }
+
+    // ── RF06: Eliminar sesión ─────────────────────────────────
+
+    @Test
+    @DisplayName("RF06 — eliminarSesion exitoso elimina del repositorio")
+    void eliminarSesion_propietario_eliminaCorrectamente() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesion));
+
+        telemetryService.eliminarSesion(10L, "piloto@apexmetrics.com");
+
+        verify(sessionRepository).deleteById(10L);
+    }
+
+    @Test
+    @DisplayName("RF06 — eliminarSesion de sesión ajena lanza AccessDeniedException")
+    void eliminarSesion_usuarioAjeno_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionAjena = TelemetrySession.builder()
+                .id(10L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionAjena));
+
+        assertThatThrownBy(() -> telemetryService.eliminarSesion(10L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+
+        verify(sessionRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("RF06 — eliminarSesion con id inexistente lanza IllegalArgumentException")
+    void eliminarSesion_sesionNoExiste_lanzaExcepcion() {
+        when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> telemetryService.eliminarSesion(99L, "piloto@apexmetrics.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Sesión no encontrada");
     }
 
     private List<TelemetryPoint> buildPoints(int count) {
