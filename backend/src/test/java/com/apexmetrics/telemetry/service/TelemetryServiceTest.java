@@ -51,7 +51,7 @@ class TelemetryServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(mockParser.getSimulatorType()).thenReturn("IRACING");
+        lenient().when(mockParser.getSimulatorType()).thenReturn("IRACING");
         telemetryService = new TelemetryService(
                 List.of(mockParser),
                 sessionRepository, pointRepository,
@@ -100,7 +100,7 @@ class TelemetryServiceTest {
         assertThatThrownBy(() -> telemetryService.uploadSession(
             file, 1L, 1L, "UNKNOWN_SIM", "piloto@apexmetrics.com", null))
                 .isInstanceOf(CsvInvalidSchemaException.class)
-                .hasMessageContaining("Unknown simulator type");
+                .hasMessageContaining("Tipo de simulador no reconocido");
     }
 
     @Test

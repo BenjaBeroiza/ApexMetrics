@@ -86,7 +86,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.register(registerDTO))
                 .isInstanceOf(UserAlreadyExistsException.class)
-                .hasMessageContaining("Email already registered");
+                .hasMessageContaining("El correo electrónico ya está registrado");
 
         verify(userRepository, never()).save(any());
     }
@@ -99,7 +99,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.register(registerDTO))
                 .isInstanceOf(UserAlreadyExistsException.class)
-                .hasMessageContaining("Username already taken");
+                .hasMessageContaining("El nombre de usuario ya está en uso");
 
         verify(userRepository, never()).save(any());
     }
@@ -127,7 +127,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.authenticate(loginDTO))
                 .isInstanceOf(CredentialException.class)
-                .hasMessageContaining("Invalid email or password");
+                .hasMessageContaining("Correo electrónico o contraseña incorrectos");
     }
 
     @Test
@@ -138,6 +138,6 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.authenticate(loginDTO))
                 .isInstanceOf(CredentialException.class)
-                .hasMessageContaining("Invalid email or password");
+                .hasMessageContaining("Correo electrónico o contraseña incorrectos");
     }
 }
