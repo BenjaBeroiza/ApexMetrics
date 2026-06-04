@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, Bell, Settings, User } from 'lucide-react';
 import '../styles/dashboard.css';
 
 export default function Dashboard() {
@@ -82,13 +83,13 @@ export default function Dashboard() {
        
         <div className="top-navbar">
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={16} /></span>
             <input type="text" placeholder="Buscar sesión..." />
           </div>
           <div className="top-icons">
-            <span>🔔</span>
-            <span>⚙️</span>
-            <span title={username}>👤</span>
+            <span><Bell size={18} /></span>
+            <span><Settings size={18} /></span>
+            <span title={username}><User size={18} /></span>
           </div>
         </div>
 

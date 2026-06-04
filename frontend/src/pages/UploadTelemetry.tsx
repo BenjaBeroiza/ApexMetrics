@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CloudUpload, FileText } from 'lucide-react';
 import '../styles/dashboard.css';
 
 export default function UploadTelemetry() {
@@ -147,7 +148,7 @@ export default function UploadTelemetry() {
           {/* LA ZONA DE DRAG & DROP DE TU IMAGEN */}
           <div className={`dropzone ${file ? 'has-file' : ''}`}>
             <input type="file" accept=".csv" onChange={handleFileChange} />
-            <div className="dropzone-icon">☁</div>
+            <div className="dropzone-icon"><CloudUpload size={40} /></div>
             <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
               {file ? file.name : 'Subir Archivo de Telemetría'}
             </h3>
@@ -174,7 +175,7 @@ export default function UploadTelemetry() {
             </div>
             <div className={`status-item ${uploadState.status}`}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span>📄</span>
+                <span><FileText size={18} /></span>
                 <span className="filename">{file ? file.name : 'archivo.csv'}</span>
               </div>
               <span className="status-msg">{uploadState.message}</span>
