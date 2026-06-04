@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Settings, User } from 'lucide-react';
 import '../styles/dashboard.css';
 
+interface Sesion {
+  sessionId: number;
+  trackName: string;
+  categoryName: string;
+  bestLapTime: number;
+  uploadedAt: string;
+}
+
 export default function Dashboard() {
-  const [sesiones, setSesiones] = useState([]);
+  const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('apex_token');
@@ -32,7 +40,7 @@ export default function Dashboard() {
     }, 800);
   };
 
-  const handleEliminarSesion = async (id) => {
+  const handleEliminarSesion = async (id: number) => {
     if (!window.confirm('¿Seguro que deseas eliminar esta sesión?')) return;
     try {
       const response = await fetch(`/api/v1/telemetry/sesiones/${id}`, {
@@ -49,7 +57,7 @@ export default function Dashboard() {
     }
   };
 
-  const formatLapTime = (seconds) => {
+  const formatLapTime = (seconds: number) => {
     if (!seconds) return '--:--.---';
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(3);

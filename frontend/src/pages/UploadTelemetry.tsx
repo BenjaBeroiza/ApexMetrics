@@ -13,7 +13,7 @@ export default function UploadTelemetry() {
     categoryId: '',
     bestLapTime: ''
   });
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   
   const [uploadState, setUploadState] = useState({ status: 'idle', message: '' });
 
@@ -23,11 +23,11 @@ export default function UploadTelemetry() {
     return null;
   }
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (!selectedFile.name.endsWith('.csv')) {
@@ -40,7 +40,7 @@ export default function UploadTelemetry() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!file || !formData.trackId || !formData.categoryId || !formData.bestLapTime) {
@@ -83,7 +83,7 @@ export default function UploadTelemetry() {
       }, 3000);
 
     } catch (err) {
-      setUploadState({ status: 'error', message: `ERROR: ${err.message.toUpperCase()}` });
+      setUploadState({ status: 'error', message: `ERROR: ${(err as Error).message.toUpperCase()}` });
     }
   };
 

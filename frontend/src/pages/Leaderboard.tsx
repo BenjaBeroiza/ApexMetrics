@@ -3,11 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Settings, User } from 'lucide-react';
 import '../styles/dashboard.css';
 
+interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  bestLapTime: number;
+  categoryName: string;
+  uploadedAt: string;
+}
+
 export default function Leaderboard() {
   const navigate = useNavigate();
-  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   
   
@@ -22,8 +30,8 @@ export default function Leaderboard() {
         const params = new URLSearchParams();
         if (filters.categoryId) params.append('categoryId', filters.categoryId);
         if (filters.trackId) params.append('trackId', filters.trackId);
-        params.append('page', filters.page);
-        params.append('size', 10); // 10 resultados por página
+        params.append('page', String(filters.page));
+        params.append('size', String(10)); // 10 resultados por página
         
         const response = await fetch(`/api/v1/leaderboard?${params.toString()}`);
         if (!response.ok) throw new Error('Fallo al obtener la clasificación');
@@ -42,15 +50,15 @@ export default function Leaderboard() {
     fetchLeaderboard();
   }, [filters]);
 
-  const handleFilterChange = (e) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value, page: 0 }); // Volver a pág 0 al filtrar
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setFilters({ ...filters, page: newPage });
   };
 
-  const formatLapTime = (seconds) => {
+  const formatLapTime = (seconds: number) => {
     if (!seconds) return '--:--.---';
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(3);
