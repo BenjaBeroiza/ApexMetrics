@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CloudUpload, FileText } from 'lucide-react';
 import '../styles/dashboard.css';
 
 /**
@@ -47,7 +48,7 @@ export default function UploadTelemetry() {
     categoryId: '',
     bestLapTime: ''
   });
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   
   const [uploadState, setUploadState] = useState({ status: 'idle', message: '' });
 
@@ -57,11 +58,11 @@ export default function UploadTelemetry() {
     return null;
   }
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (!selectedFile.name.endsWith('.csv')) {
@@ -74,7 +75,7 @@ export default function UploadTelemetry() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!file || !formData.trackId || !formData.categoryId || !formData.bestLapTime) {
@@ -117,7 +118,7 @@ export default function UploadTelemetry() {
       }, 3000);
 
     } catch (err) {
-      setUploadState({ status: 'error', message: `ERROR: ${err.message.toUpperCase()}` });
+      setUploadState({ status: 'error', message: `ERROR: ${(err as Error).message.toUpperCase()}` });
     }
   };
 
@@ -182,7 +183,7 @@ export default function UploadTelemetry() {
           {/* LA ZONA DE DRAG & DROP DE TU IMAGEN */}
           <div className={`dropzone ${file ? 'has-file' : ''}`}>
             <input type="file" accept=".csv" onChange={handleFileChange} />
-            <div className="dropzone-icon">☁</div>
+            <div className="dropzone-icon"><CloudUpload size={40} /></div>
             <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
               {file ? file.name : 'Subir Archivo de Telemetría'}
             </h3>
@@ -209,7 +210,7 @@ export default function UploadTelemetry() {
             </div>
             <div className={`status-item ${uploadState.status}`}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span>📄</span>
+                <span><FileText size={18} /></span>
                 <span className="filename">{file ? file.name : 'archivo.csv'}</span>
               </div>
               <span className="status-msg">{uploadState.message}</span>
