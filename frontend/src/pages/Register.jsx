@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
 
 export default function Register() {
@@ -8,10 +8,11 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    country: 'Chile' 
+    country: ''
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,8 +42,7 @@ export default function Register() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Operador registrado:', data.username);
-        // Aquí podrías redirigir al dashboard o al login
+        navigate('/login');
       } else {
         const errData = await response.json();
         setError(errData.message || 'Error en el registro');
@@ -89,6 +89,20 @@ export default function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 required 
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label>PAÍS</label>
+            <div className="input-wrapper">
+              <input
+                type="text"
+                name="country"
+                placeholder="Ej. Chile"
+                value={formData.country}
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
