@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
 
 export default function Register() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -10,16 +11,15 @@ export default function Register() {
     confirmPassword: '',
     country: ''
   });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (formData.password.length < 16) {
       setError('Error: Mínimo 16 caracteres requeridos para la clave');
@@ -41,7 +41,6 @@ export default function Register() {
       });
 
       if (response.ok) {
-        const data = await response.json();
         navigate('/login');
       } else {
         const errData = await response.json();
@@ -63,18 +62,18 @@ export default function Register() {
 
       <div className="auth-card">
         <h2 className="card-title">REGISTRO DE OPERADOR</h2>
-        
+
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
             <label>NOMBRE CLAVE / ALIAS</label>
             <div className="input-wrapper">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="username"
                 placeholder="Ej. Piloto 1"
                 value={formData.username}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
@@ -82,13 +81,13 @@ export default function Register() {
           <div className="input-group">
             <label>ID OPERADOR (CORREO)</label>
             <div className="input-wrapper">
-              <input 
-                type="email" 
+              <input
+                type="email"
                 name="email"
                 placeholder="nuevo@apex.sim"
                 value={formData.email}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
@@ -110,13 +109,13 @@ export default function Register() {
           <div className="input-group">
             <label>NUEVA CLAVE DE AUTORIZACIÓN</label>
             <div className={`input-wrapper ${error && error.includes('16') ? 'error' : ''}`}>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 name="password"
                 placeholder="Mínimo 16 caracteres"
                 value={formData.password}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
@@ -124,13 +123,13 @@ export default function Register() {
           <div className="input-group">
             <label>CONFIRMAR CLAVE</label>
             <div className={`input-wrapper ${error && error.includes('coinciden') ? 'error' : ''}`}>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 name="confirmPassword"
                 placeholder="Repetir clave"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
             {error && <p className="error-message">{error}</p>}

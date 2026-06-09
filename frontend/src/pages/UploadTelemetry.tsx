@@ -1,6 +1,42 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CloudUpload, FileText } from 'lucide-react';
 import '../styles/dashboard.css';
+
+/**
+ * Opciones de circuito que se ofrecen al piloto en el formulario de carga.
+ *
+ * El `id` debe coincidir EXACTAMENTE con la fila correspondiente en la tabla
+ * `tracks` de PostgreSQL, sembrada por la migración Flyway V1__init_schema.sql.
+ * Si el id no existe en backend, el endpoint POST /api/v1/telemetry/upload
+ * responderá 400 con "Circuito no encontrado".
+ *
+ * Fuente de verdad: backend/src/main/resources/db/migration/V1__init_schema.sql
+ */
+const TRACK_OPTIONS = [
+  { id: 1, label: 'Autodromo Nazionale di Monza' },
+  { id: 2, label: 'Circuit de Spa-Francorchamps' },
+  { id: 3, label: 'Nürburgring Nordschleife' },
+  { id: 4, label: 'Circuit de Catalunya' },
+  { id: 5, label: 'Autodromo Enzo e Dino Ferrari' }
+];
+
+/**
+ * Opciones de categoría que se ofrecen al piloto en el formulario de carga.
+ *
+ * Los ids son discontinuos (1, 3, 4) porque la migración V2__update_categories.sql
+ * elimina las filas originales con id 2 (GT4) e id 5 (TCR) y renombra Formula 2 → F1
+ * y Hypercar → WEC manteniendo sus ids originales (3 y 4 respectivamente).
+ *
+ * Fuente de verdad:
+ *  - V1__init_schema.sql       (siembra inicial)
+ *  - V2__update_categories.sql (DELETE + UPDATE que dejan ids 1, 3, 4)
+ */
+const CATEGORY_OPTIONS = [
+  { id: 1, label: 'GT3' },
+  { id: 3, label: 'F1' },
+  { id: 4, label: 'WEC' }
+];
 
 export default function UploadTelemetry() {
   const navigate = useNavigate();
@@ -12,7 +48,7 @@ export default function UploadTelemetry() {
     categoryId: '',
     bestLapTime: ''
   });
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
   
   const [uploadState, setUploadState] = useState({ status: 'idle', message: '' });
 
@@ -22,11 +58,11 @@ export default function UploadTelemetry() {
     return null;
   }
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       if (!selectedFile.name.endsWith('.csv')) {
@@ -39,7 +75,7 @@ export default function UploadTelemetry() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!file || !formData.trackId || !formData.categoryId || !formData.bestLapTime) {
@@ -72,7 +108,7 @@ export default function UploadTelemetry() {
         throw new Error(errData.message || 'FALLÓ LA VALIDACIÓN DEL ARCHIVO');
       }
 
-      setUploadState({ status: 'success', message: 'ÉXITO - ANALIZADO 100%' });
+      setUploadState({ status: 'success', message: 'SESIÓN REGISTRADA CORRECTAMENTE' });
       
       // Limpieza tras éxito
       setTimeout(() => {
@@ -82,7 +118,7 @@ export default function UploadTelemetry() {
       }, 3000);
 
     } catch (err) {
-      setUploadState({ status: 'error', message: `ERROR: ${err.message.toUpperCase()}` });
+      setUploadState({ status: 'error', message: `ERROR: ${(err as Error).message.toUpperCase()}` });
     }
   };
 
@@ -92,7 +128,7 @@ export default function UploadTelemetry() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
@@ -105,7 +141,7 @@ export default function UploadTelemetry() {
       {/* ÁREA PRINCIPAL */}
       <main className="main-content">
         <div className="page-header">
-          <h1>Ingesta de Datos</h1>
+          <h1>SUBIR TELEMETRÍA</h1>
           <p>Configure los metadatos de la sesión y seleccione el archivo de registro generado por su simulador. El motor de análisis procesará automáticamente los canales de datos para su visualización en el dashboard.</p>
         </div>
 
@@ -124,22 +160,22 @@ export default function UploadTelemetry() {
               <label>CIRCUITO</label>
               <select name="trackId" value={formData.trackId} onChange={handleChange} className="neon-select" required>
                 <option value="">Seleccione circuito...</option>
-                <option value="1">Interlagos</option>
-                <option value="2">Spa-Francorchamps</option>
-                <option value="3">Le Mans</option>
+                {TRACK_OPTIONS.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
               </select>
             </div>
             <div className="input-group">
               <label>CATEGORÍA</label>
               <select name="categoryId" value={formData.categoryId} onChange={handleChange} className="neon-select" required>
                 <option value="">Seleccione categoría...</option>
-                <option value="1">F1</option>
-                <option value="2">GT3</option>
-                <option value="3">WEC</option>
+                {CATEGORY_OPTIONS.map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
               </select>
             </div>
             <div className="input-group">
-              <label>MEJOR TIEMPO (S)</label>
+              <label>MEJOR VUELTA (seg)</label>
               <input type="number" step="0.001" name="bestLapTime" value={formData.bestLapTime} onChange={handleChange} className="neon-select" placeholder="Ej. 70.450" required />
             </div>
           </div>
@@ -147,7 +183,7 @@ export default function UploadTelemetry() {
           {/* LA ZONA DE DRAG & DROP DE TU IMAGEN */}
           <div className={`dropzone ${file ? 'has-file' : ''}`}>
             <input type="file" accept=".csv" onChange={handleFileChange} />
-            <div className="dropzone-icon">☁</div>
+            <div className="dropzone-icon"><CloudUpload size={40} /></div>
             <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem' }}>
               {file ? file.name : 'Subir Archivo de Telemetría'}
             </h3>
@@ -161,7 +197,7 @@ export default function UploadTelemetry() {
           </div>
 
           <button type="submit" className="neon-button" disabled={uploadState.status === 'processing'} style={{ padding: '1rem', marginTop: 0 }}>
-            {uploadState.status === 'processing' ? 'SINCRONIZANDO...' : 'INICIAR INGESTA'}
+            {uploadState.status === 'processing' ? 'PROCESANDO...' : 'ENVIAR SESIÓN'}
           </button>
         </form>
 
@@ -169,12 +205,12 @@ export default function UploadTelemetry() {
         {uploadState.status !== 'idle' && (
           <div className="upload-status-area">
             <div className="status-header">
-              <span>COLA DE INGESTIÓN ACTIVA</span>
+              <span>ESTADO DE LA CARGA</span>
               <span>1 Archivo</span>
             </div>
             <div className={`status-item ${uploadState.status}`}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span>📄</span>
+                <span><FileText size={18} /></span>
                 <span className="filename">{file ? file.name : 'archivo.csv'}</span>
               </div>
               <span className="status-msg">{uploadState.message}</span>
