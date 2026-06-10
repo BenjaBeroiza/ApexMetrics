@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, Bell, Settings, User } from 'lucide-react';
 import '../styles/dashboard.css';
 
 /**
@@ -37,31 +38,39 @@ const CATEGORY_OPTIONS = [
   { id: 4, label: 'WEC' }
 ];
 
+interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  bestLapTime: number;
+  categoryName: string;
+  uploadedAt: string;
+}
+
 export default function Leaderboard() {
   const navigate = useNavigate();
-  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
-  
-  
+
+
   const [filters, setFilters] = useState({ categoryId: '', trackId: '', page: 0 });
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = new URLSearchParams();
         if (filters.categoryId) params.append('categoryId', filters.categoryId);
         if (filters.trackId) params.append('trackId', filters.trackId);
-        params.append('page', filters.page);
-        params.append('size', 10); // 10 resultados por página
-        
+        params.append('page', String(filters.page));
+        params.append('size', String(10)); // 10 resultados por página
+
         const response = await fetch(`/api/v1/leaderboard?${params.toString()}`);
         if (!response.ok) throw new Error('Fallo al obtener la clasificación');
-        
+
         const data = await response.json();
         setLeaderboardData(data.content || []);
         setTotalPages(data.totalPages || 1);
@@ -76,15 +85,15 @@ export default function Leaderboard() {
     fetchLeaderboard();
   }, [filters]);
 
-  const handleFilterChange = (e) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilters({ ...filters, [e.target.name]: e.target.value, page: 0 }); // Volver a pág 0 al filtrar
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     setFilters({ ...filters, page: newPage });
   };
 
-  const formatLapTime = (seconds) => {
+  const formatLapTime = (seconds: number) => {
     if (!seconds) return '--:--.---';
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(3);
@@ -93,11 +102,11 @@ export default function Leaderboard() {
 
   return (
     <div className="app-layout">
-    
+
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
@@ -114,17 +123,17 @@ export default function Leaderboard() {
 
 
       <main className="main-content">
-        
+
         {/* TOP NAVBAR */}
         <div className="top-navbar">
           <div className="search-bar">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={16} /></span>
             <input type="text" placeholder="Buscar piloto..." />
           </div>
           <div className="top-icons">
-            <span>🔔</span>
-            <span>⚙️</span>
-            <span>👤</span>
+            <span><Bell size={18} /></span>
+            <span><Settings size={18} /></span>
+            <span><User size={18} /></span>
           </div>
         </div>
 
@@ -132,7 +141,7 @@ export default function Leaderboard() {
           <h1>CLASIFICACIÓN GLOBAL</h1>
           <p style={{ color: 'var(--neon-cyan)', fontSize: '0.8rem', letterSpacing: '1px' }}>
             <span style={{ display: 'inline-block', width: '8px', height: '8px', background: 'var(--neon-cyan)', borderRadius: '50%', marginRight: '8px' }}></span>
-            TABLA DE POSICIONES
+            LIVE TELEMETRY FEED
           </p>
         </div>
 
@@ -154,7 +163,7 @@ export default function Leaderboard() {
 
         {/* TABLA */}
         {loading ? (
-          <div className="loading-state"><span className="blink-text">Cargando clasificación...</span></div>
+          <div className="loading-state"><span className="blink-text">Sincronizando...</span></div>
         ) : error ? (
           <div className="loading-state"><span style={{ color: 'var(--error-red)' }}>{error}</span></div>
         ) : (
@@ -182,17 +191,17 @@ export default function Leaderboard() {
 
             {/* CONTROLES DE PAGINACIÓN */}
             <div className="pagination">
-              <button 
-                className="page-btn" 
-                disabled={filters.page === 0} 
+              <button
+                className="page-btn"
+                disabled={filters.page === 0}
                 onClick={() => handlePageChange(filters.page - 1)}
               >&lt;</button>
-              
+
               <button className="page-btn active">{filters.page + 1}</button>
-              
-              <button 
-                className="page-btn" 
-                disabled={filters.page >= totalPages - 1} 
+
+              <button
+                className="page-btn"
+                disabled={filters.page >= totalPages - 1}
                 onClick={() => handlePageChange(filters.page + 1)}
               >&gt;</button>
             </div>
