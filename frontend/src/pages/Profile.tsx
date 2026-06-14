@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut } from 'lucide-react';
 import '../styles/dashboard.css';
@@ -12,13 +12,6 @@ interface ProfileData {
 export default function Profile() {
   const navigate = useNavigate();
   const token = localStorage.getItem('apex_token');
-
-  // Redirige si no hay sesión activa
-  if (!token) {
-    navigate('/login');
-    return null;
-  }
-
   const username = localStorage.getItem('apex_username') || 'Piloto';
 
   const [profile] = useState<ProfileData>({
@@ -28,6 +21,17 @@ export default function Profile() {
   });
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Redirige si no hay sesión activa
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+    }
+  }, [token, navigate]);
+
+  if (!token) {
+    return null;
+  }
 
   const handleLogout = () => {
     localStorage.clear();
