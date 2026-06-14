@@ -24,5 +24,15 @@ Thumbs.db
 # Docker
 docker/*.env
 
+# Variables de entorno reales (no comitear)
+.env
+
+# Cobertura frontend
+frontend/coverage/
+
+# SonarQube scanner
+.scannerwork/
+frontend/.scannerwork/
+
 # Claude Code
 .claude/
