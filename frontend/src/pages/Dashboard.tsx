@@ -87,7 +87,7 @@ export default function Dashboard() {
           <button className="nav-item active">DASHBOARD</button>
           <button className="nav-item" onClick={() => navigate('/leaderboard')}>CLASIFICACIÓN</button>
           <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
-          <button className="nav-item">AJUSTES</button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
         </nav>
         <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
           <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem', background: 'transparent', color: 'var(--error-red)', borderColor: 'var(--error-red)' }} onClick={() => { localStorage.clear(); navigate('/login'); }}>
