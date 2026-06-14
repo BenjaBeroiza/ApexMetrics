@@ -14,7 +14,7 @@ interface Sesion {
 export default function Dashboard() {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('apex_token');
