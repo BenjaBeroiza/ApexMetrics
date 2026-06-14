@@ -30,7 +30,7 @@ export default function Register() {
       return;
     }
 
-    const { confirmPassword, ...payload } = formData;
+    const { confirmPassword: _confirmPassword, ...payload } = formData;
     setLoading(true);
 
     try {
@@ -46,7 +46,7 @@ export default function Register() {
         const errData = await response.json();
         setError(errData.message || 'Error en el registro');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Error de conexión');
     } finally {
       setLoading(false);

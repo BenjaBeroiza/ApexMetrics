@@ -74,7 +74,7 @@ export default function Leaderboard() {
         const data = await response.json();
         setLeaderboardData(data.content || []);
         setTotalPages(data.totalPages || 1);
-      } catch (err) {
+      } catch (_err) {
         setError("Error de conexión con el servidor");
         setLeaderboardData([]);
       } finally {
