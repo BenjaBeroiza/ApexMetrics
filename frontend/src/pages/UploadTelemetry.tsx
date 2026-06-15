@@ -134,7 +134,7 @@ export default function UploadTelemetry() {
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
           <button className="nav-item" onClick={() => navigate('/leaderboard')}>CLASIFICACIÓN</button>
           <button className="nav-item active">SUBIR TELEMETRÍA</button>
-          <button className="nav-item">AJUSTES</button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
         </nav>
       </aside>
 

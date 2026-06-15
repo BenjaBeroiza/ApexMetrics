@@ -14,19 +14,11 @@ interface Sesion {
 export default function Dashboard() {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('apex_token');
   const username = localStorage.getItem('apex_username') || 'Piloto';
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    cargarHistorial();
-  }, [navigate, token]);
 
   const cargarHistorial = async () => {
     setLoading(true);
@@ -42,12 +34,22 @@ export default function Dashboard() {
       if (!response.ok) throw new Error('Error al cargar las sesiones');
       const data = await response.json();
       setSesiones(data);
-    } catch (err) {
+    } catch (_err) {
       setError('No se pudo conectar con el servidor.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    cargarHistorial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, token]);
 
   const handleEliminarSesion = async (id: number) => {
     if (!window.confirm('¿Seguro que deseas eliminar esta sesión?')) return;
@@ -61,7 +63,7 @@ export default function Dashboard() {
       } else {
         alert('Error al eliminar la sesión');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('Error de conexión');
     }
   };
@@ -85,7 +87,7 @@ export default function Dashboard() {
           <button className="nav-item active">DASHBOARD</button>
           <button className="nav-item" onClick={() => navigate('/leaderboard')}>CLASIFICACIÓN</button>
           <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
-          <button className="nav-item">AJUSTES</button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
         </nav>
         <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
           <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem', background: 'transparent', color: 'var(--error-red)', borderColor: 'var(--error-red)' }} onClick={() => { localStorage.clear(); navigate('/login'); }}>

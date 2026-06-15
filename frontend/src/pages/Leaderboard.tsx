@@ -74,7 +74,7 @@ export default function Leaderboard() {
         const data = await response.json();
         setLeaderboardData(data.content || []);
         setTotalPages(data.totalPages || 1);
-      } catch (err) {
+      } catch (_err) {
         setError("Error de conexión con el servidor");
         setLeaderboardData([]);
       } finally {
@@ -112,7 +112,7 @@ export default function Leaderboard() {
           <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
           <button className="nav-item active">CLASIFICACIÓN</button>
           <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
-          <button className="nav-item">AJUSTES</button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
         </nav>
         <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
           <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem' }} onClick={() => setFilters({...filters})}>
