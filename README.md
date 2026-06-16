@@ -199,8 +199,70 @@ La base de datos se inicializa automáticamente con Flyway al primer arranque.
 | ID | Nombre |
 |----|--------|
 | 1 | GT3 |
-| 2 | F1 |
-| 3 | WEC |
+| 3 | F1 |
+| 4 | WEC |
+
+> Los IDs 2 y 5 (GT4 y TCR) fueron eliminados por la migración V2.
+
+---
+
+## Tests
+
+### Backend
+
+```bash
+cd backend
+mvn verify
+```
+
+Ejecuta tests unitarios y de integración `@SpringBootTest`. Resultado esperado:
+- **45/45 tests pasan** (`BUILD SUCCESS`)
+- Reporte JaCoCo en `backend/target/site/jacoco/index.html` (cobertura ≥ 85% en capa Service)
+
+### Frontend
+
+```bash
+cd frontend
+npm install        # solo la primera vez
+npm run test:cov   # tests + reporte de cobertura
+```
+
+Resultado esperado:
+- **39/39 tests pasan** (Vitest)
+- Reporte de cobertura en `frontend/coverage/lcov.info`
+
+### Pipeline de calidad completo (SonarQube local)
+
+**1. Levantar SonarQube:**
+
+```bash
+docker compose -f docker/sonarqube-local.yml up -d
+```
+
+Esperar ~2 min y acceder a `http://localhost:9000` con `admin` / `admin`. Crear dos proyectos (`apexmetrics-backend` y `apexmetrics-frontend`) y generar un token para cada uno desde **Mi Cuenta → Seguridad → Generar Token**.
+
+**2. Copiar `.env.example` a `.env` y completar los tokens:**
+
+```
+SONAR_TOKEN_BACKEND=<token-generado>
+SONAR_TOKEN_FRONTEND=<token-generado>
+```
+
+**3. Ejecutar el pipeline:**
+
+```powershell
+# PowerShell (Windows)
+$env:SONAR_TOKEN_BACKEND="<token>"; $env:SONAR_TOKEN_FRONTEND="<token>"
+.\run-quality.ps1
+```
+
+```bash
+# Bash (Linux/macOS)
+export SONAR_TOKEN_BACKEND="<token>" && export SONAR_TOKEN_FRONTEND="<token>"
+bash run-quality.sh
+```
+
+Verificar resultados en `http://localhost:9000`.
 
 ---
 
