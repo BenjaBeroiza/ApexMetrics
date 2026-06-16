@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "telemetry_sessions")
@@ -36,4 +38,8 @@ public class TelemetrySession {
 
     @Column(name = "best_lap_time")
     private Double bestLapTime;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TelemetryPoint> points = new ArrayList<>();
 }
