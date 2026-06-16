@@ -82,7 +82,7 @@ public class AuthService implements IAuthService {
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             log.error("AuthService.authenticate: wrong password for — {}", dto.getEmail());
-            throw new CredentialException("Invalid email or password");
+            throw new CredentialException("Correo electrónico o contraseña incorrectos");
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());

@@ -37,7 +37,7 @@ export default function Login() {
       } else {
         setError('Error: Credenciales inválidas');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Error de conexión con el servidor');
     } finally {
       setLoading(false);

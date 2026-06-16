@@ -291,3 +291,133 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* --- ESTADO DE CARGA GLOBAL --- */
+.loading-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.blink-text {
+  color: var(--text-muted);
+  font-family: monospace;
+  letter-spacing: 2px;
+  animation: blink 1.2s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* =====================================================
+   RESPONSIVE — TABLETA (≤ 1024px)
+   ===================================================== */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .search-bar input {
+    width: 200px;
+  }
+
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE — MÓVIL / TABLET PEQUEÑA (≤ 768px)
+   ===================================================== */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* Sidebar se convierte en barra superior compacta */
+  .sidebar {
+    width: 100%;
+    min-height: unset;
+    padding: 1rem 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebar-header {
+    padding: 0 1.2rem;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding: 0 0.5rem;
+  }
+
+  .nav-item {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .main-content {
+    padding: 1.2rem 1rem;
+  }
+
+  .top-navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .page-header h1 {
+    font-size: 1.4rem;
+  }
+
+  /* Tabla scrollable horizontalmente */
+  .minimal-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE — MÓVIL PEQUEÑO (≤ 480px)
+   ===================================================== */
+@media (max-width: 480px) {
+  .sidebar-header h2 {
+    font-size: 0.9rem;
+  }
+
+  .nav-item {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .neon-button {
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+  }
+}

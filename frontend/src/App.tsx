@@ -1,10 +1,11 @@
-// src/App.jsx
+// src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Leaderboard from './pages/Leaderboard';
 import Dashboard from './pages/Dashboard';
 import UploadTelemetry from './pages/UploadTelemetry';
+import Profile from './pages/Profile';
 
 /**
  * Componente raíz de enrutamiento de la SPA.
@@ -15,6 +16,7 @@ import UploadTelemetry from './pages/UploadTelemetry';
  *  - /leaderboard  → clasificación pública (RF07)
  *  - /dashboard    → historial de sesiones del piloto autenticado (RF08, RF09)
  *  - /upload       → formulario de carga de telemetría CSV (RF04)
+ *  - /profile      → perfil del piloto autenticado (RF03)
  *  - /             → redirige al login por defecto
  *
  * La protección de rutas (verificación de JWT) se realiza dentro de cada
@@ -33,6 +35,7 @@ export default function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadTelemetry />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

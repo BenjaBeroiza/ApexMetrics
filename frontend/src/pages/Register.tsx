@@ -9,12 +9,12 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    country: 'Chile' 
+    country: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null);
   };
@@ -30,7 +30,7 @@ export default function Register() {
       return;
     }
 
-    const { confirmPassword, ...payload } = formData;
+    const { confirmPassword: _confirmPassword, ...payload } = formData;
     setLoading(true);
 
     try {
@@ -46,7 +46,7 @@ export default function Register() {
         const errData = await response.json();
         setError(errData.message || 'Error en el registro');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Error de conexión');
     } finally {
       setLoading(false);
@@ -56,78 +56,92 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-header">
-        <h1 className="neon-text">ApexMetrics</h1>
-        <p className="sub-text">Plataforma de Análisis de Telemetría</p>
+        <h1 className="neon-text">APEXMETRICS</h1>
+        <p className="sub-text">ENGINEERING V2.0</p>
       </div>
 
       <div className="auth-card">
-        <h2 className="card-title">CREAR CUENTA</h2>
-        
+        <h2 className="card-title">REGISTRO DE OPERADOR</h2>
+
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="input-group">
-            <label>NOMBRE DE USUARIO</label>
+            <label>NOMBRE CLAVE / ALIAS</label>
             <div className="input-wrapper">
               <input
                 type="text"
                 name="username"
-                placeholder="Ej. JohnDoe"
+                placeholder="Ej. Piloto 1"
                 value={formData.username}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
 
           <div className="input-group">
-            <label>CORREO ELECTRÓNICO</label>
+            <label>ID OPERADOR (CORREO)</label>
             <div className="input-wrapper">
               <input
                 type="email"
                 name="email"
-                placeholder="correo@ejemplo.com"
+                placeholder="nuevo@apex.sim"
                 value={formData.email}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
 
           <div className="input-group">
-            <label>CONTRASEÑA</label>
+            <label>PAÍS</label>
+            <div className="input-wrapper">
+              <input
+                type="text"
+                name="country"
+                placeholder="Ej. Chile"
+                value={formData.country}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label>NUEVA CLAVE DE AUTORIZACIÓN</label>
             <div className={`input-wrapper ${error && error.includes('16') ? 'error' : ''}`}>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 name="password"
                 placeholder="Mínimo 16 caracteres"
                 value={formData.password}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
           </div>
 
           <div className="input-group">
-            <label>CONFIRMAR CONTRASEÑA</label>
+            <label>CONFIRMAR CLAVE</label>
             <div className={`input-wrapper ${error && error.includes('coinciden') ? 'error' : ''}`}>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 name="confirmPassword"
-                placeholder="Repite tu contraseña"
+                placeholder="Repetir clave"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                required 
+                required
               />
             </div>
             {error && <p className="error-message">{error}</p>}
           </div>
 
           <button type="submit" className="neon-button" disabled={loading}>
-            {loading ? 'PROCESANDO...' : 'CREAR CUENTA'} <span>→</span>
+            {loading ? 'PROCESANDO...' : 'SOLICITAR ACCESO'} <span>→</span>
           </button>
 
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <Link to="/login" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none' }}>
-              ¿Ya tienes cuenta? Inicia sesión
+              ¿YA TIENES ACCESO? INICIAR SESIÓN
             </Link>
           </div>
         </form>
@@ -138,7 +152,7 @@ export default function Register() {
             <span className="dot active"></span>
             <span className="dot"></span>
           </div>
-          <span className="secure-text">CONEXIÓN SEGURA</span>
+          <span className="secure-text">ENCRYPTING_</span>
         </div>
       </div>
     </div>
