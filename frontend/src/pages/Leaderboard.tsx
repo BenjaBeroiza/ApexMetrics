@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Settings, User } from 'lucide-react';
+import { Search, Bell, Settings, User, LayoutDashboard, Trophy, Upload } from 'lucide-react';
 import '../styles/dashboard.css';
 
 /**
@@ -106,13 +106,25 @@ export default function Leaderboard() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
-          <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
-          <button className="nav-item active">CLASIFICACIÓN</button>
-          <button className="nav-item" onClick={() => navigate('/upload')}>SUBIR TELEMETRÍA</button>
-          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
+          <button className="nav-item" onClick={() => navigate('/dashboard')}>
+            <LayoutDashboard size={14} style={{ marginRight: '0.5rem' }} />
+            DASHBOARD
+          </button>
+          <button className="nav-item active">
+            <Trophy size={14} style={{ marginRight: '0.5rem' }} />
+            CLASIFICACIÓN
+          </button>
+          <button className="nav-item" onClick={() => navigate('/upload')}>
+            <Upload size={14} style={{ marginRight: '0.5rem' }} />
+            SUBIR TELEMETRÍA
+          </button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>
+            <User size={14} style={{ marginRight: '0.5rem' }} />
+            MI PERFIL
+          </button>
         </nav>
         <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
           <button className="neon-button" style={{ fontSize: '0.7rem', padding: '0.8rem' }} onClick={() => setFilters({...filters})}>

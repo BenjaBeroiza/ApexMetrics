@@ -33,6 +33,8 @@ export default function Login() {
         const data = await response.json();
         localStorage.setItem('apex_token', data.token);
         localStorage.setItem('apex_username', data.username);
+        localStorage.setItem('apex_email', data.email);
+        localStorage.setItem('apex_country', data.country ?? '');
         window.location.href = '/dashboard';
       } else {
         setError('Error: Credenciales inválidas');
