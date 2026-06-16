@@ -41,6 +41,9 @@ export default function Register() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('apex_email', data.email ?? formData.email);
+        localStorage.setItem('apex_country', data.country ?? formData.country);
         navigate('/login');
       } else {
         const errData = await response.json();

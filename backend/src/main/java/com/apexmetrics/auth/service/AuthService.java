@@ -58,7 +58,7 @@ public class AuthService implements IAuthService {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name());
+        return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name(), user.getEmail(), user.getCountry());
     }
 
     /**
@@ -86,6 +86,6 @@ public class AuthService implements IAuthService {
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name());
+        return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name(), user.getEmail(), user.getCountry());
     }
 }

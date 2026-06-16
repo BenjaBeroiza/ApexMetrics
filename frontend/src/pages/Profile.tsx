@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut } from 'lucide-react';
+import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut, Search, Bell, Settings } from 'lucide-react';
 import '../styles/dashboard.css';
 
 interface ProfileData {
@@ -16,8 +16,8 @@ export default function Profile() {
 
   const [profile] = useState<ProfileData>({
     username,
-    email: '—',
-    country: '—',
+    email: localStorage.getItem('apex_email') || '—',
+    country: localStorage.getItem('apex_country') || '—',
   });
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -39,7 +39,6 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    // Placeholder para futura integración con PUT /api/v1/users/me
     setSaveStatus('success');
     setTimeout(() => setSaveStatus('idle'), 2500);
   };
@@ -50,7 +49,7 @@ export default function Profile() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>APEXMETRICS</h2>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>ENGINEERING V2.0</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
           <button className="nav-item" onClick={() => navigate('/dashboard')}>
@@ -84,6 +83,17 @@ export default function Profile() {
 
       {/* CONTENIDO PRINCIPAL */}
       <main className="main-content">
+        <div className="top-navbar">
+          <div className="search-bar">
+            <span className="search-icon"><Search size={16} /></span>
+            <input type="text" placeholder="Buscar..." />
+          </div>
+          <div className="top-icons">
+            <span><Bell size={18} /></span>
+            <span><Settings size={18} /></span>
+            <span title={username}><User size={18} /></span>
+          </div>
+        </div>
         <div className="page-header">
           <h1>MI PERFIL</h1>
           <p>Información de tu cuenta de piloto. Próximamente: edición completa de datos.</p>

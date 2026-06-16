@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CloudUpload, FileText } from 'lucide-react';
+import { CloudUpload, FileText, Search, Bell, Settings, User, LogOut, LayoutDashboard, Trophy, Upload } from 'lucide-react';
 import '../styles/dashboard.css';
 
 /**
@@ -131,15 +131,48 @@ export default function UploadTelemetry() {
           <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
         </div>
         <nav className="sidebar-nav">
-          <button className="nav-item" onClick={() => navigate('/dashboard')}>DASHBOARD</button>
-          <button className="nav-item" onClick={() => navigate('/leaderboard')}>CLASIFICACIÓN</button>
-          <button className="nav-item active">SUBIR TELEMETRÍA</button>
-          <button className="nav-item" onClick={() => navigate('/profile')}>MI PERFIL</button>
+          <button className="nav-item" onClick={() => navigate('/dashboard')}>
+            <LayoutDashboard size={14} style={{ marginRight: '0.5rem' }} />
+            DASHBOARD
+          </button>
+          <button className="nav-item" onClick={() => navigate('/leaderboard')}>
+            <Trophy size={14} style={{ marginRight: '0.5rem' }} />
+            CLASIFICACIÓN
+          </button>
+          <button className="nav-item active">
+            <Upload size={14} style={{ marginRight: '0.5rem' }} />
+            SUBIR TELEMETRÍA
+          </button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>
+            <User size={14} style={{ marginRight: '0.5rem' }} />
+            MI PERFIL
+          </button>
         </nav>
+        <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
+          <button
+            className="neon-button"
+            style={{ fontSize: '0.7rem', padding: '0.8rem', background: 'transparent', color: 'var(--error-red)', borderColor: 'var(--error-red)' }}
+            onClick={() => { localStorage.clear(); navigate('/login'); }}
+          >
+            <LogOut size={12} style={{ marginRight: '0.4rem' }} />
+            CERRAR SESIÓN
+          </button>
+        </div>
       </aside>
 
       {/* ÁREA PRINCIPAL */}
       <main className="main-content">
+        <div className="top-navbar">
+          <div className="search-bar">
+            <span className="search-icon"><Search size={16} /></span>
+            <input type="text" placeholder="Buscar sesión..." />
+          </div>
+          <div className="top-icons">
+            <span><Bell size={18} /></span>
+            <span><Settings size={18} /></span>
+            <span><User size={18} /></span>
+          </div>
+        </div>
         <div className="page-header">
           <h1>SUBIR TELEMETRÍA</h1>
           <p>Configure los metadatos de la sesión y seleccione el archivo de registro generado por su simulador. El motor de análisis procesará automáticamente los canales de datos para su visualización en el dashboard.</p>
