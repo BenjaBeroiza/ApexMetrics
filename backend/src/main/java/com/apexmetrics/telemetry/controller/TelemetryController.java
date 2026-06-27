@@ -1,5 +1,6 @@
 package com.apexmetrics.telemetry.controller;
 
+import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.service.ITelemetryService;
@@ -89,6 +90,28 @@ public class TelemetryController {
             @PathVariable Long id,
             @AuthenticationPrincipal String userEmail) {
         return ResponseEntity.ok(telemetryService.obtenerPuntos(id, userEmail));
+    }
+
+    /**
+     * Devuelve los puntos de dos sesiones propias para compararlas en el frontend
+     * (superposición de curvas de velocidad y frenado). El servicio valida que ambas
+     * sesiones pertenezcan al usuario autenticado, devolviendo 403 si alguna es ajena.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa RF06 — Comparación de vueltas.
+     *
+     * @param sessionA identificador de la primera sesión a comparar
+     * @param sessionB identificador de la segunda sesión a comparar
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con ComparacionDTO (puntos de la sesión A y de la sesión B)
+     */
+    @GetMapping("/comparacion")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<ComparacionDTO> compararSesiones(
+            @RequestParam("sessionA") Long sessionA,
+            @RequestParam("sessionB") Long sessionB,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.compararSesiones(sessionA, sessionB, userEmail));
     }
 
     /**

@@ -167,6 +167,58 @@ class TelemetryControllerIT extends IntegrationTestBase {
                 .andExpect(status().isForbidden());
     }
 
+    // RF06 — Comparación de vueltas
+
+    @Test
+    void comparacion_dosSesionesPropias_retorna200ConAmbasSesiones() throws Exception {
+        String jwt = obtainJwt("tel_cmp01", "tel_cmp01@test.com", "SecureTestPass16");
+        MockMultipartFile csv = new MockMultipartFile(
+                "file", "sesion.csv", "text/csv", IRACING_CSV.getBytes());
+
+        Long sessionA = subirSesion(jwt, csv);
+        Long sessionB = subirSesion(jwt, csv);
+
+        mockMvc.perform(get("/api/v1/telemetry/comparacion")
+                        .param("sessionA", sessionA.toString())
+                        .param("sessionB", sessionB.toString())
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sesionA").isArray())
+                .andExpect(jsonPath("$.sesionB").isArray())
+                .andExpect(jsonPath("$.sesionA[0].speed").exists());
+    }
+
+    @Test
+    void comparacion_conSesionAjena_retorna403() throws Exception {
+        // userA sube ambas sesiones
+        String jwtA = obtainJwt("tel_cmpA01", "tel_cmpA01@test.com", "SecureTestPass16");
+        MockMultipartFile csv = new MockMultipartFile(
+                "file", "sesion.csv", "text/csv", IRACING_CSV.getBytes());
+        Long sessionA = subirSesion(jwtA, csv);
+        Long sessionB = subirSesion(jwtA, csv);
+
+        // userB intenta comparar sesiones de userA → 403
+        String jwtB = obtainJwt("tel_cmpB01", "tel_cmpB01@test.com", "SecureTestPass16");
+        mockMvc.perform(get("/api/v1/telemetry/comparacion")
+                        .param("sessionA", sessionA.toString())
+                        .param("sessionB", sessionB.toString())
+                        .header("Authorization", "Bearer " + jwtB))
+                .andExpect(status().isForbidden());
+    }
+
+    /** Sube una sesión con el JWT dado y devuelve su sessionId (helper para las pruebas de comparación). */
+    private Long subirSesion(String jwt, MockMultipartFile csv) throws Exception {
+        var upload = mockMvc.perform(multipart("/api/v1/telemetry/upload")
+                        .file(csv)
+                        .param("trackId", trackId.toString())
+                        .param("categoryId", categoryId.toString())
+                        .param("simulatorType", "IRACING")
+                        .header("Authorization", "Bearer " + jwt))
+                .andReturn();
+        return objectMapper.readTree(
+                upload.getResponse().getContentAsString()).get("sessionId").asLong();
+    }
+
     // RF09 — Eliminación de sesiones
 
     @Test

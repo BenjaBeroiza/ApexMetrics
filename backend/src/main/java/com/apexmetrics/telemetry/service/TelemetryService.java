@@ -3,6 +3,7 @@ package com.apexmetrics.telemetry.service;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
+import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
@@ -153,6 +154,44 @@ public class TelemetryService implements ITelemetryService {
     @Override
     @Transactional(readOnly = true)
     public List<TelemetryPointDTO> obtenerPuntos(Long sessionId, String userEmail) {
+        return puntosDeSesionPropia(sessionId, userEmail);
+    }
+
+    /**
+     * Retorna los puntos de dos sesiones propias para compararlas en el frontend.
+     * Reutiliza la validación de propiedad de cada sesión; si alguna no pertenece al
+     * usuario, la operación completa falla con AccessDeniedException (no se devuelven
+     * datos parciales). Marcado readOnly por ser solo lectura.
+     *
+     * Implementa RF06 — Comparación de vueltas.
+     *
+     * @param sessionAId identificador de la primera sesión a comparar
+     * @param sessionBId identificador de la segunda sesión a comparar
+     * @param userEmail email del usuario autenticado, dueño esperado de ambas sesiones
+     * @return ComparacionDTO con los puntos de la sesión A y de la sesión B
+     * @throws IllegalArgumentException si alguna sesión no existe
+     * @throws AccessDeniedException si alguna sesión pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ComparacionDTO compararSesiones(Long sessionAId, Long sessionBId, String userEmail) {
+        List<TelemetryPointDTO> puntosA = puntosDeSesionPropia(sessionAId, userEmail);
+        List<TelemetryPointDTO> puntosB = puntosDeSesionPropia(sessionBId, userEmail);
+        return new ComparacionDTO(puntosA, puntosB);
+    }
+
+    /**
+     * Valida que la sesión exista y pertenezca al usuario autenticado, y devuelve sus
+     * puntos mapeados a TelemetryPointDTO. Centraliza el control de autorización a nivel
+     * de recurso (evita IDOR) reutilizado por obtenerPuntos (RF05) y compararSesiones (RF06).
+     *
+     * @param sessionId identificador de la sesión
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión pertenece a otro usuario
+     */
+    private List<TelemetryPointDTO> puntosDeSesionPropia(Long sessionId, String userEmail) {
         TelemetrySession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
         if (!session.getUser().getEmail().equals(userEmail)) {

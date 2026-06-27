@@ -3,6 +3,7 @@ package com.apexmetrics.auth.service;
 import com.apexmetrics.auth.dto.AuthResponseDTO;
 import com.apexmetrics.auth.dto.LoginRequestDTO;
 import com.apexmetrics.auth.dto.RegisterRequestDTO;
+import com.apexmetrics.auth.dto.UserProfileDTO;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.entity.UserRole;
 import com.apexmetrics.auth.repository.UserRepository;
@@ -87,5 +88,28 @@ public class AuthService implements IAuthService {
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
         return new AuthResponseDTO(token, jwtUtil.getExpirationMs(), user.getUsername(), user.getRole().name(), user.getEmail(), user.getCountry());
+    }
+
+    /**
+     * Devuelve los datos de perfil del usuario autenticado leídos desde la base de datos.
+     * Resuelve el usuario por el email contenido en el JWT y mapea solo la información
+     * mostrable a UserProfileDTO (sin exponer el hash de contraseña).
+     *
+     * Implementa RF03 — Perfil de usuario.
+     *
+     * @param email correo del usuario autenticado (principal del SecurityContext)
+     * @return UserProfileDTO con username, email, country y role
+     * @throws IllegalArgumentException si el usuario no existe en base de datos
+     */
+    @Override
+    public UserProfileDTO getProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
+        return new UserProfileDTO(
+                user.getUsername(),
+                user.getEmail(),
+                user.getCountry(),
+                user.getRole().name()
+        );
     }
 }

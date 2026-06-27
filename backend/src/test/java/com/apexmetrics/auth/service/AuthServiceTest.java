@@ -3,6 +3,7 @@ package com.apexmetrics.auth.service;
 import com.apexmetrics.auth.dto.AuthResponseDTO;
 import com.apexmetrics.auth.dto.LoginRequestDTO;
 import com.apexmetrics.auth.dto.RegisterRequestDTO;
+import com.apexmetrics.auth.dto.UserProfileDTO;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.entity.UserRole;
 import com.apexmetrics.auth.repository.UserRepository;
@@ -139,5 +140,31 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.authenticate(loginDTO))
                 .isInstanceOf(CredentialException.class)
                 .hasMessageContaining("Correo electrónico o contraseña incorrectos");
+    }
+
+    // ── RF03: Perfil de usuario ───────────────────────────────
+
+    @Test
+    @DisplayName("RF03 — getProfile retorna los datos del usuario sin el hash de contraseña")
+    void getProfile_usuarioExistente_retornaPerfil() {
+        existingUser.setCountry("Chile");
+        when(userRepository.findByEmail("piloto@apexmetrics.com")).thenReturn(Optional.of(existingUser));
+
+        UserProfileDTO perfil = authService.getProfile("piloto@apexmetrics.com");
+
+        assertThat(perfil.getUsername()).isEqualTo("piloto01");
+        assertThat(perfil.getEmail()).isEqualTo("piloto@apexmetrics.com");
+        assertThat(perfil.getCountry()).isEqualTo("Chile");
+        assertThat(perfil.getRole()).isEqualTo("PILOT");
+    }
+
+    @Test
+    @DisplayName("RF03 — getProfile lanza IllegalArgumentException si el usuario no existe")
+    void getProfile_usuarioNoExiste_lanzaExcepcion() {
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.getProfile("nadie@test.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Usuario no encontrado");
     }
 }
