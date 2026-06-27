@@ -284,6 +284,50 @@ class TelemetryServiceTest {
                 .hasMessageContaining("Sesión no encontrada");
     }
 
+    // ── RF06: Comparación de vueltas (compararSesiones) ───────
+
+    @Test
+    @DisplayName("RF06 — compararSesiones del dueño retorna puntos de ambas sesiones")
+    void compararSesiones_propietario_retornaAmbasSesiones() {
+        TelemetrySession sesionA = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        TelemetrySession sesionB = TelemetrySession.builder()
+                .id(20L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionA));
+        when(sessionRepository.findById(20L)).thenReturn(Optional.of(sesionB));
+        when(pointRepository.findBySessionId(10L)).thenReturn(buildPoints(3));
+        when(pointRepository.findBySessionId(20L)).thenReturn(buildPoints(5));
+
+        var resultado = telemetryService.compararSesiones(10L, 20L, "piloto@apexmetrics.com");
+
+        assertThat(resultado.getSesionA()).hasSize(3);
+        assertThat(resultado.getSesionB()).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("RF06 — compararSesiones lanza AccessDeniedException si la segunda sesión es ajena")
+    void compararSesiones_segundaSesionAjena_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionA = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        TelemetrySession sesionBAjena = TelemetrySession.builder()
+                .id(20L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionA));
+        when(sessionRepository.findById(20L)).thenReturn(Optional.of(sesionBAjena));
+        when(pointRepository.findBySessionId(10L)).thenReturn(buildPoints(3));
+
+        assertThatThrownBy(() -> telemetryService.compararSesiones(10L, 20L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+    }
+
     // ── RF06: Eliminar sesión ─────────────────────────────────
 
     @Test

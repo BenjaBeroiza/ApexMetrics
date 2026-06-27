@@ -1,5 +1,6 @@
 package com.apexmetrics.telemetry.service;
 
+import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +52,21 @@ public interface ITelemetryService {
      * @return lista de TelemetryPointDTO ordenada por distancia (puede estar vacía)
      */
     List<TelemetryPointDTO> obtenerPuntos(Long sessionId, String userEmail);
+
+    /**
+     * Devuelve los puntos de dos sesiones propias del usuario para compararlas.
+     * Las implementaciones deben validar que ambas sesiones pertenezcan al solicitante
+     * (control de autorización a nivel de recurso); si alguna es ajena se rechaza la
+     * operación completa.
+     *
+     * Implementa RF06 — Comparación de vueltas.
+     *
+     * @param sessionAId identificador de la primera sesión a comparar
+     * @param sessionBId identificador de la segunda sesión a comparar
+     * @param userEmail email del usuario autenticado, dueño esperado de ambas sesiones
+     * @return ComparacionDTO con los puntos de la sesión A y de la sesión B
+     */
+    ComparacionDTO compararSesiones(Long sessionAId, Long sessionBId, String userEmail);
 
     /**
      * Elimina una sesión propia del usuario autenticado.
