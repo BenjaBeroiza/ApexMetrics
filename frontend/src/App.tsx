@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import UploadTelemetry from './pages/UploadTelemetry';
 import Profile from './pages/Profile';
 import SessionAnalysis from './pages/SessionAnalysis';
+import ComparacionVueltas from './pages/ComparacionVueltas';
 
 /**
  * Componente raíz de enrutamiento de la SPA.
@@ -17,6 +18,7 @@ import SessionAnalysis from './pages/SessionAnalysis';
  *  - /leaderboard  → clasificación pública (RF07)
  *  - /dashboard    → historial de sesiones del piloto autenticado (RF08, RF09)
  *  - /dashboard/sesiones/:id/analisis → curvas de velocidad/frenado de una sesión (RF05)
+ *  - /comparacion  → comparación superpuesta de dos sesiones (RF06)
  *  - /upload       → formulario de carga de telemetría CSV (RF04)
  *  - /profile      → perfil del piloto autenticado (RF03)
  *  - /             → redirige al login por defecto
@@ -37,6 +39,7 @@ export default function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/sesiones/:id/analisis" element={<SessionAnalysis />} />
+        <Route path="/comparacion" element={<ComparacionVueltas />} />
         <Route path="/upload" element={<UploadTelemetry />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/" element={<Navigate to="/login" replace />} />

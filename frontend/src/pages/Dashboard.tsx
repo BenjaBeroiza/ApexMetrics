@@ -124,9 +124,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
-          <p>Historial de sesiones de telemetría personal.</p>
+        <div className="page-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
+            <p>Historial de sesiones de telemetría personal.</p>
+          </div>
+          {sesiones.length >= 2 && (
+            <button
+              onClick={() => navigate('/comparacion')}
+              className="neon-button"
+              style={{ width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.75rem' }}
+            >
+              COMPARAR VUELTAS
+            </button>
+          )}
         </div>
 
         {loading ? (
