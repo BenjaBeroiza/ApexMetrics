@@ -1,6 +1,7 @@
 package com.apexmetrics.telemetry.controller;
 
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.service.ITelemetryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -67,6 +68,27 @@ public class TelemetryController {
     public ResponseEntity<List<SessionSummaryDTO>> obtenerHistorial(
             @AuthenticationPrincipal String userEmail) {
         return ResponseEntity.ok(telemetryService.obtenerHistorial(userEmail));
+    }
+
+    /**
+     * Devuelve los puntos de telemetría de una sesión propia para alimentar el
+     * dashboard analítico del frontend (curvas de velocidad y frenado sincronizadas
+     * por distancia recorrida). El servicio valida que la sesión pertenezca al usuario
+     * autenticado, devolviendo 403 si se intenta acceder a una sesión ajena.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa RF05 — Dashboard analítico.
+     *
+     * @param id identificador de la sesión cuyos puntos se solicitan
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con la lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     */
+    @GetMapping("/sesiones/{id}/puntos")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<List<TelemetryPointDTO>> obtenerPuntos(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerPuntos(id, userEmail));
     }
 
     /**

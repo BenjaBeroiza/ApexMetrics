@@ -63,10 +63,14 @@ public class AssettoCorsaCsvParser implements CsvParser {
             Map<String, Integer> headerIndex = buildHeaderIndex(headers);
             validateHeaders(headerIndex);
 
+            // Posición local opcional: solo si el CSV trae las columnas posX y posZ.
+            // Assetto Corsa exporta coordenadas de mundo local → plano CRS.Simple (sin tiles).
+            boolean hasPos = hasAll(headerIndex, List.of("posX", "posZ"));
+
             String[] row;
             int rowNum = 0;
             while ((row = reader.readNext()) != null) {
-                points.add(buildTelemetryPoint(row, headerIndex, rowNum++));
+                points.add(buildTelemetryPoint(row, headerIndex, rowNum++, hasPos));
             }
         } catch (CsvInvalidSchemaException e) {
             throw e;
@@ -75,6 +79,11 @@ public class AssettoCorsaCsvParser implements CsvParser {
             throw new CsvInvalidSchemaException("Error al procesar el CSV de Assetto Corsa: " + e.getMessage(), "UNKNOWN");
         }
         return points;
+    }
+
+    /** Indica si el índice de cabeceras contiene todas las columnas indicadas (para posición opcional). */
+    private boolean hasAll(Map<String, Integer> idx, List<String> cols) {
+        return cols.stream().allMatch(idx::containsKey);
     }
 
     /** Construye un mapa cabecera→posición para acceso a columnas por nombre, tolerando reordenamiento. */
@@ -106,13 +115,19 @@ public class AssettoCorsaCsvParser implements CsvParser {
             return 0.0;
         }
     }
-    /** Construye un TelemetryPoint a partir de una fila del CSV usando el índice de cabeceras y el número de fila como distancia. */
-    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum) {
+    /** Construye un TelemetryPoint a partir de una fila del CSV usando el índice de cabeceras y el número de fila como distancia.
+     *  Si hasPos es true, además puebla la posición local (posX→x, posZ→y) marcándola como no geográfica. */
+    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum, boolean hasPos) {
         TelemetryPoint p = new TelemetryPoint();
         p.setDistance((double) rowNum);
         p.setSpeed(parseDouble(row, headerIndex, "speedKmh"));
         p.setBrake(parseDouble(row, headerIndex, "brake"));
         p.setThrottle(parseDouble(row, headerIndex, "gas"));
+        if (hasPos) {
+            p.setPosX(parseDouble(row, headerIndex, "posX"));  // X = coordenada local x
+            p.setPosY(parseDouble(row, headerIndex, "posZ"));  // Y = coordenada local z
+            p.setGeographic(false);
+        }
         return p;
     }
     /** Abre un CSVReader (OpenCSV) sobre el stream del MultipartFile asumiendo codificación UTF-8. */

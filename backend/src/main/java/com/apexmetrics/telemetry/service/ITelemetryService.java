@@ -1,6 +1,7 @@
 package com.apexmetrics.telemetry.service;
 
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -35,6 +36,21 @@ public interface ITelemetryService {
      * @return lista de SessionSummaryDTO con las sesiones del usuario
      */
     List<SessionSummaryDTO> obtenerHistorial(String userEmail);
+
+    /**
+     * Devuelve los puntos de telemetría de una sesión propia para graficar las
+     * curvas de velocidad y frenado sincronizadas por distancia recorrida.
+     * Las implementaciones deben validar que el solicitante sea el dueño de la
+     * sesión para evitar el acceso a datos ajenos (control de autorización a
+     * nivel de recurso).
+     *
+     * Implementa RF05 — Dashboard analítico.
+     *
+     * @param sessionId identificador de la sesión cuyos puntos se solicitan
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return lista de TelemetryPointDTO ordenada por distancia (puede estar vacía)
+     */
+    List<TelemetryPointDTO> obtenerPuntos(Long sessionId, String userEmail);
 
     /**
      * Elimina una sesión propia del usuario autenticado.

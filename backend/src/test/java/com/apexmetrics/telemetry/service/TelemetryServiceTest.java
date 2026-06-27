@@ -5,6 +5,7 @@ import com.apexmetrics.auth.entity.UserRole;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.apexmetrics.telemetry.entity.TelemetrySession;
@@ -233,6 +234,54 @@ class TelemetryServiceTest {
         List<SessionSummaryDTO> resultado = telemetryService.obtenerHistorial("piloto@apexmetrics.com");
 
         assertThat(resultado).isEmpty();
+    }
+
+    // ── RF05: Dashboard analítico (obtenerPuntos) ─────────────
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos del dueño retorna lista de puntos mapeados")
+    void obtenerPuntos_propietario_retornaPuntos() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        List<TelemetryPoint> puntos = buildPoints(3);
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesion));
+        when(pointRepository.findBySessionId(10L)).thenReturn(puntos);
+
+        List<TelemetryPointDTO> resultado = telemetryService.obtenerPuntos(10L, "piloto@apexmetrics.com");
+
+        assertThat(resultado).hasSize(3);
+        assertThat(resultado.get(0).getDistance()).isEqualTo(0.0);
+        assertThat(resultado.get(0).getSpeed()).isEqualTo(100.0);
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos de sesión ajena lanza AccessDeniedException")
+    void obtenerPuntos_usuarioAjeno_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionAjena = TelemetrySession.builder()
+                .id(10L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionAjena));
+
+        assertThatThrownBy(() -> telemetryService.obtenerPuntos(10L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+
+        verify(pointRepository, never()).findBySessionId(any());
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos con sesión inexistente lanza IllegalArgumentException")
+    void obtenerPuntos_sesionNoExiste_lanzaExcepcion() {
+        when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> telemetryService.obtenerPuntos(99L, "piloto@apexmetrics.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Sesión no encontrada");
     }
 
     // ── RF06: Eliminar sesión ─────────────────────────────────

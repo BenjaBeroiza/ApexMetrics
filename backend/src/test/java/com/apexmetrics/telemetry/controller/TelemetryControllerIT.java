@@ -111,6 +111,62 @@ class TelemetryControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$[0].sessionId").exists());
     }
 
+    // RF05 — Dashboard analítico (puntos de sesión)
+
+    @Test
+    void puntos_sinJwt_retorna401() throws Exception {
+        mockMvc.perform(get("/api/v1/telemetry/sesiones/{id}/puntos", 1L))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void puntos_sesionPropia_retorna200ConPuntos() throws Exception {
+        String jwt = obtainJwt("tel_pts01", "tel_pts01@test.com", "SecureTestPass16");
+        MockMultipartFile csv = new MockMultipartFile(
+                "file", "sesion.csv", "text/csv", IRACING_CSV.getBytes());
+
+        var upload = mockMvc.perform(multipart("/api/v1/telemetry/upload")
+                        .file(csv)
+                        .param("trackId", trackId.toString())
+                        .param("categoryId", categoryId.toString())
+                        .param("simulatorType", "IRACING")
+                        .header("Authorization", "Bearer " + jwt))
+                .andReturn();
+        Long sessionId = objectMapper.readTree(
+                upload.getResponse().getContentAsString()).get("sessionId").asLong();
+
+        mockMvc.perform(get("/api/v1/telemetry/sesiones/{id}/puntos", sessionId)
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].distance").exists())
+                .andExpect(jsonPath("$[0].speed").exists());
+    }
+
+    @Test
+    void puntos_sesionAjena_retorna403() throws Exception {
+        // userA sube una sesión
+        String jwtA = obtainJwt("tel_ptsA01", "tel_ptsA01@test.com", "SecureTestPass16");
+        MockMultipartFile csv = new MockMultipartFile(
+                "file", "sesion.csv", "text/csv", IRACING_CSV.getBytes());
+
+        var upload = mockMvc.perform(multipart("/api/v1/telemetry/upload")
+                        .file(csv)
+                        .param("trackId", trackId.toString())
+                        .param("categoryId", categoryId.toString())
+                        .param("simulatorType", "IRACING")
+                        .header("Authorization", "Bearer " + jwtA))
+                .andReturn();
+        Long sessionId = objectMapper.readTree(
+                upload.getResponse().getContentAsString()).get("sessionId").asLong();
+
+        // userB intenta ver los puntos de la sesión de userA → 403
+        String jwtB = obtainJwt("tel_ptsB01", "tel_ptsB01@test.com", "SecureTestPass16");
+        mockMvc.perform(get("/api/v1/telemetry/sesiones/{id}/puntos", sessionId)
+                        .header("Authorization", "Bearer " + jwtB))
+                .andExpect(status().isForbidden());
+    }
+
     // RF09 — Eliminación de sesiones
 
     @Test
