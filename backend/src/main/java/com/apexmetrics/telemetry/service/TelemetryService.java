@@ -4,6 +4,7 @@ import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.apexmetrics.telemetry.entity.TelemetrySession;
@@ -130,6 +131,39 @@ public class TelemetryService implements ITelemetryService {
                         s.getUploadedAt(),
                         s.getBestLapTime(),
                         0
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Retorna los puntos de telemetría de una sesión propia para el dashboard analítico.
+     * Verifica primero que la sesión exista y que pertenezca al usuario autenticado
+     * (mismo control de autorización que eliminarSesion, evita IDOR), luego mapea los
+     * puntos a DTOs ligeros con distance/speed/brake/throttle. Marcado readOnly para
+     * evitar dirty-checking de Hibernate.
+     *
+     * Implementa RF05 — Dashboard analítico.
+     *
+     * @param sessionId identificador de la sesión cuyos puntos se solicitan
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión existe pero pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<TelemetryPointDTO> obtenerPuntos(Long sessionId, String userEmail) {
+        TelemetrySession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
+        if (!session.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("No tienes permiso para ver esta sesión");
+        }
+        return pointRepository.findBySessionId(sessionId).stream()
+                .map(p -> new TelemetryPointDTO(
+                        p.getDistance(),
+                        p.getSpeed(),
+                        p.getBrake(),
+                        p.getThrottle()
                 ))
                 .collect(Collectors.toList());
     }
