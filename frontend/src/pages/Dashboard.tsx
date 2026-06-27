@@ -157,7 +157,13 @@ export default function Dashboard() {
                   <td style={{ color: 'var(--neon-cyan)' }}>{formatLapTime(sesion.bestLapTime)}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(sesion.uploadedAt).toLocaleDateString()}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button 
+                    <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/analisis`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      VER ANÁLISIS
+                    </button>
+                    <button
                       onClick={() => handleEliminarSesion(sesion.sessionId)}
                       style={{ background: 'none', border: 'none', color: 'var(--error-red)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >
