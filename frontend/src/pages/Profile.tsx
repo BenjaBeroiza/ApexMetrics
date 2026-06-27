@@ -7,6 +7,7 @@ interface ProfileData {
   username: string;
   email: string;
   country: string;
+  role?: string;
 }
 
 export default function Profile() {
@@ -14,10 +15,13 @@ export default function Profile() {
   const token = localStorage.getItem('apex_token');
   const username = localStorage.getItem('apex_username') || 'Piloto';
 
-  const [profile] = useState<ProfileData>({
+  // Estado inicial desde localStorage (fallback inmediato); luego se reemplaza
+  // con los datos reales del backend cuando la petición responde.
+  const [profile, setProfile] = useState<ProfileData>({
     username,
     email: localStorage.getItem('apex_email') || '—',
     country: localStorage.getItem('apex_country') || '—',
+    role: localStorage.getItem('apex_role') || undefined,
   });
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -28,6 +32,17 @@ export default function Profile() {
       navigate('/login');
     }
   }, [token, navigate]);
+
+  // Carga el perfil real desde el backend (RF03). Si falla, mantiene el fallback de localStorage.
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/v1/users/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: ProfileData) => setProfile(data))
+      .catch(() => { /* se conserva el perfil cacheado de localStorage */ });
+  }, [token]);
 
   if (!token) {
     return null;
@@ -127,7 +142,7 @@ export default function Profile() {
             </div>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontWeight: 'bold', letterSpacing: '1px', margin: 0 }}>{profile.username.toUpperCase()}</p>
-              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', letterSpacing: '2px', margin: '0.3rem 0 0' }}>PILOTO</p>
+              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', letterSpacing: '2px', margin: '0.3rem 0 0' }}>{(profile.role || 'PILOTO').toUpperCase()}</p>
             </div>
             <div style={{
               width: '100%',
