@@ -61,6 +61,10 @@ public class IracingCsvParser implements CsvParser {
             Map<String, Integer> headerIndex = buildHeaderIndex(headers);
             validateHeaders(headerIndex);
 
+            // Posición GPS opcional: solo si el CSV trae las columnas Lat y Lon.
+            // iRacing exporta coordenadas geográficas → se dibujan sobre tiles OSM.
+            boolean hasGps = hasAll(headerIndex, List.of("Lat", "Lon"));
+
             String[] row;
             while ((row = reader.readNext()) != null) {
                 TelemetryPoint p = new TelemetryPoint();
@@ -68,6 +72,11 @@ public class IracingCsvParser implements CsvParser {
                 p.setSpeed(parseDouble(row, headerIndex, "Speed"));
                 p.setBrake(parseDouble(row, headerIndex, "Brake"));
                 p.setThrottle(parseDouble(row, headerIndex, "Throttle"));
+                if (hasGps) {
+                    p.setPosX(parseDouble(row, headerIndex, "Lon"));  // X = longitud
+                    p.setPosY(parseDouble(row, headerIndex, "Lat"));  // Y = latitud
+                    p.setGeographic(true);
+                }
                 points.add(p);
             }
         } catch (CsvInvalidSchemaException e) {
@@ -77,6 +86,11 @@ public class IracingCsvParser implements CsvParser {
             throw new CsvInvalidSchemaException("Error al procesar el CSV de iRacing: " + e.getMessage(), "UNKNOWN");
         }
         return points;
+    }
+
+    /** Indica si el índice de cabeceras contiene todas las columnas indicadas (para posición opcional). */
+    private boolean hasAll(Map<String, Integer> idx, List<String> cols) {
+        return cols.stream().allMatch(idx::containsKey);
     }
 
     /** Construye un mapa cabecera→posición para acceso a columnas por nombre, tolerando reordenamiento. */
