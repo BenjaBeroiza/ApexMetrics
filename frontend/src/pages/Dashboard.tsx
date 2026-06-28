@@ -175,6 +175,12 @@ export default function Dashboard() {
                       VER ANÁLISIS
                     </button>
                     <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/trazado`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      VER TRAZADO
+                    </button>
+                    <button
                       onClick={() => handleEliminarSesion(sesion.sessionId)}
                       style={{ background: 'none', border: 'none', color: 'var(--error-red)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import UploadTelemetry from './pages/UploadTelemetry';
 import Profile from './pages/Profile';
 import SessionAnalysis from './pages/SessionAnalysis';
+import TrackView from './pages/TrackView';
 import ComparacionVueltas from './pages/ComparacionVueltas';
 
 /**
@@ -18,6 +19,7 @@ import ComparacionVueltas from './pages/ComparacionVueltas';
  *  - /leaderboard  → clasificación pública (RF07)
  *  - /dashboard    → historial de sesiones del piloto autenticado (RF08, RF09)
  *  - /dashboard/sesiones/:id/analisis → curvas de velocidad/frenado de una sesión (RF05)
+ *  - /dashboard/sesiones/:id/trazado  → recorrido de la sesión sobre el mapa (trazado MVP)
  *  - /comparacion  → comparación superpuesta de dos sesiones (RF06)
  *  - /upload       → formulario de carga de telemetría CSV (RF04)
  *  - /profile      → perfil del piloto autenticado (RF03)
@@ -39,6 +41,7 @@ export default function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/sesiones/:id/analisis" element={<SessionAnalysis />} />
+        <Route path="/dashboard/sesiones/:id/trazado" element={<TrackView />} />
         <Route path="/comparacion" element={<ComparacionVueltas />} />
         <Route path="/upload" element={<UploadTelemetry />} />
         <Route path="/profile" element={<Profile />} />

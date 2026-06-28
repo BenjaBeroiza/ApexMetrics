@@ -3,6 +3,7 @@ package com.apexmetrics.telemetry.controller;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
+import com.apexmetrics.telemetry.dto.TrackPathDTO;
 import com.apexmetrics.telemetry.service.ITelemetryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -112,6 +113,27 @@ public class TelemetryController {
             @RequestParam("sessionB") Long sessionB,
             @AuthenticationPrincipal String userEmail) {
         return ResponseEntity.ok(telemetryService.compararSesiones(sessionA, sessionB, userEmail));
+    }
+
+    /**
+     * Devuelve la traza (recorrido 2D) de una sesión propia para dibujarla sobre el mapa
+     * del frontend con Leaflet. El servicio valida que la sesión pertenezca al usuario
+     * autenticado, devolviendo 403 si se intenta acceder a una sesión ajena. El flag
+     * geographic indica si los puntos son coordenadas GPS (tiles OSM) o plano local
+     * (CRS.Simple). Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa el trazado de pistas (Bloque B — OpenStreetMap / Leaflet).
+     *
+     * @param id identificador de la sesión cuya traza se solicita
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con TrackPathDTO (flag geographic + puntos con posición, puede estar vacío)
+     */
+    @GetMapping("/sesiones/{id}/trazado")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<TrackPathDTO> obtenerTrazado(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerTrazado(id, userEmail));
     }
 
     /**

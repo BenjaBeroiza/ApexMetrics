@@ -3,6 +3,7 @@ package com.apexmetrics.telemetry.service;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
+import com.apexmetrics.telemetry.dto.TrackPathDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -67,6 +68,22 @@ public interface ITelemetryService {
      * @return ComparacionDTO con los puntos de la sesión A y de la sesión B
      */
     ComparacionDTO compararSesiones(Long sessionAId, Long sessionBId, String userEmail);
+
+    /**
+     * Devuelve la traza (recorrido 2D) de una sesión propia para dibujarla sobre el
+     * mapa del frontend (Leaflet). Las implementaciones deben validar que la sesión
+     * pertenezca al solicitante (control de autorización a nivel de recurso; 403 si es
+     * ajena), conservar únicamente los puntos que tengan posición (posX/posY != null) y
+     * mapearlos a TrackPointDTO. El flag geographic se toma del primer punto con posición;
+     * si la sesión no tiene posición, la lista de puntos queda vacía.
+     *
+     * Implementa el trazado de pistas (Bloque B — OpenStreetMap / Leaflet).
+     *
+     * @param sessionId identificador de la sesión cuya traza se solicita
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return TrackPathDTO con el flag geographic y los puntos con posición (puede estar vacío)
+     */
+    TrackPathDTO obtenerTrazado(Long sessionId, String userEmail);
 
     /**
      * Elimina una sesión propia del usuario autenticado.
