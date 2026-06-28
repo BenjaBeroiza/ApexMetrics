@@ -6,6 +6,8 @@ import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
+import com.apexmetrics.telemetry.dto.TrackPathDTO;
+import com.apexmetrics.telemetry.dto.TrackPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.apexmetrics.telemetry.entity.TelemetrySession;
@@ -178,6 +180,49 @@ public class TelemetryService implements ITelemetryService {
         List<TelemetryPointDTO> puntosA = puntosDeSesionPropia(sessionAId, userEmail);
         List<TelemetryPointDTO> puntosB = puntosDeSesionPropia(sessionBId, userEmail);
         return new ComparacionDTO(puntosA, puntosB);
+    }
+
+    /**
+     * Retorna la traza (recorrido 2D) de una sesión propia para dibujarla sobre el mapa
+     * del frontend. Reutiliza la validación de propiedad (mismo control anti-IDOR que
+     * obtenerPuntos), conserva solo los puntos con posición (posX/posY != null) y los mapea
+     * a TrackPointDTO. El flag geographic se toma del primer punto con posición; si la sesión
+     * no tiene posición, points queda vacío y geographic en false. Marcado readOnly por ser
+     * solo lectura.
+     *
+     * Implementa el trazado de pistas (Bloque B — OpenStreetMap / Leaflet).
+     *
+     * @param sessionId identificador de la sesión cuya traza se solicita
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return TrackPathDTO con el flag geographic y los puntos con posición (puede estar vacío)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión existe pero pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TrackPathDTO obtenerTrazado(Long sessionId, String userEmail) {
+        TelemetrySession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
+        if (!session.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("No tienes permiso para ver esta sesión");
+        }
+
+        List<TelemetryPoint> conPosicion = pointRepository.findBySessionId(sessionId).stream()
+                .filter(p -> p.getPosX() != null && p.getPosY() != null)
+                .collect(Collectors.toList());
+
+        List<TrackPointDTO> points = conPosicion.stream()
+                .map(p -> new TrackPointDTO(
+                        p.getPosX(),
+                        p.getPosY(),
+                        p.getSpeed() != null ? p.getSpeed() : 0.0
+                ))
+                .collect(Collectors.toList());
+
+        boolean geographic = !conPosicion.isEmpty()
+                && Boolean.TRUE.equals(conPosicion.get(0).getGeographic());
+
+        return new TrackPathDTO(geographic, points);
     }
 
     /**
