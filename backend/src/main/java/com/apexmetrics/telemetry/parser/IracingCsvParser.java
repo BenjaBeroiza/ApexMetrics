@@ -65,10 +65,22 @@ public class IracingCsvParser implements CsvParser {
             // iRacing exporta coordenadas geográficas → se dibujan sobre tiles OSM.
             boolean hasGps = hasAll(headerIndex, List.of("Lat", "Lon"));
 
+            // Detección de vuelta: se incrementa el contador cuando Distance disminuye
+            // respecto al valor anterior, lo que indica un reseteo al inicio de vuelta.
+            // Bloque C — Comparación de vueltas.
+            int lapNumber = 1;
+            double prevDistance = -1.0;
+
             String[] row;
             while ((row = reader.readNext()) != null) {
                 TelemetryPoint p = new TelemetryPoint();
-                p.setDistance(parseDouble(row, headerIndex, "Distance"));
+                double distance = parseDouble(row, headerIndex, "Distance");
+                if (prevDistance >= 0 && distance < prevDistance) {
+                    lapNumber++;
+                }
+                prevDistance = distance;
+                p.setDistance(distance);
+                p.setLapNumber(lapNumber);
                 p.setSpeed(parseDouble(row, headerIndex, "Speed"));
                 p.setBrake(parseDouble(row, headerIndex, "Brake"));
                 p.setThrottle(parseDouble(row, headerIndex, "Throttle"));

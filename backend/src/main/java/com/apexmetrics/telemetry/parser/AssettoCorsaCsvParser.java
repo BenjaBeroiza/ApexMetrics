@@ -67,10 +67,21 @@ public class AssettoCorsaCsvParser implements CsvParser {
             // Assetto Corsa exporta coordenadas de mundo local → plano CRS.Simple (sin tiles).
             boolean hasPos = hasAll(headerIndex, List.of("posX", "posZ"));
 
+            // Detección de vuelta: se incrementa el contador cuando el valor del campo
+            // "pos" (número de fila secuencial) disminuye respecto al anterior,
+            // lo que indica un reseteo al inicio de una nueva vuelta.
+            // Bloque C — Comparación de vueltas.
+            int lapNumber = 1;
+            int prevRowNum = -1;
+
             String[] row;
             int rowNum = 0;
             while ((row = reader.readNext()) != null) {
-                points.add(buildTelemetryPoint(row, headerIndex, rowNum++, hasPos));
+                if (prevRowNum >= 0 && rowNum <= prevRowNum) {
+                    lapNumber++;
+                }
+                prevRowNum = rowNum;
+                points.add(buildTelemetryPoint(row, headerIndex, rowNum++, hasPos, lapNumber));
             }
         } catch (CsvInvalidSchemaException e) {
             throw e;
@@ -116,10 +127,12 @@ public class AssettoCorsaCsvParser implements CsvParser {
         }
     }
     /** Construye un TelemetryPoint a partir de una fila del CSV usando el índice de cabeceras y el número de fila como distancia.
-     *  Si hasPos es true, además puebla la posición local (posX→x, posZ→y) marcándola como no geográfica. */
-    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum, boolean hasPos) {
+     *  Si hasPos es true, además puebla la posición local (posX→x, posZ→y) marcándola como no geográfica.
+     *  lapNumber indica el número de vuelta 1-based detectado por el parser (Bloque C). */
+    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum, boolean hasPos, int lapNumber) {
         TelemetryPoint p = new TelemetryPoint();
         p.setDistance((double) rowNum);
+        p.setLapNumber(lapNumber);
         p.setSpeed(parseDouble(row, headerIndex, "speedKmh"));
         p.setBrake(parseDouble(row, headerIndex, "brake"));
         p.setThrottle(parseDouble(row, headerIndex, "gas"));
