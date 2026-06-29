@@ -84,4 +84,39 @@ class AssettoCorsaCsvParserTest {
         assertThatThrownBy(() -> parser.parse(csv("")))
                 .isInstanceOf(CsvInvalidSchemaException.class);
     }
+
+    // ── Detección de vuelta ───────────────────────────────
+
+    @Test
+    @DisplayName("Trazado — reset de pos (rowNum) incrementa lapNumber (Bloque C)")
+    void parse_resetDePos_incrementaLapNumber() {
+        String content = "pos,speedKmh,brake,gas\n"
+                + "0,0,0,0\n"
+                + "1,45.2,0,1\n"
+                + "2,90.5,0,1\n"
+                + "0,0,0,0\n"   // reset → vuelta 2
+                + "1,42.1,0,1\n";
+
+        List<TelemetryPoint> points = parser.parse(csv(content));
+
+        assertThat(points).hasSize(5);
+        assertThat(points.get(0).getLapNumber()).isEqualTo(1);
+        assertThat(points.get(1).getLapNumber()).isEqualTo(1);
+        assertThat(points.get(2).getLapNumber()).isEqualTo(1);
+        assertThat(points.get(3).getLapNumber()).isEqualTo(2);
+        assertThat(points.get(4).getLapNumber()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Trazado — sin reset pos todos los puntos en lapNumber 1")
+    void parse_sinReset_todosEnLapNumber1_ac() {
+        String content = "pos,speedKmh,brake,gas\n"
+                + "0,0,0,0\n"
+                + "1,45.2,0,1\n"
+                + "2,90.5,0,1\n";
+
+        List<TelemetryPoint> points = parser.parse(csv(content));
+
+        assertThat(points).allSatisfy(p -> assertThat(p.getLapNumber()).isEqualTo(1));
+    }
 }
