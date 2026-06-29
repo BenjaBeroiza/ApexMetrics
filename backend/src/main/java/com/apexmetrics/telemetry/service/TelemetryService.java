@@ -215,7 +215,9 @@ public class TelemetryService implements ITelemetryService {
                 .map(p -> new TrackPointDTO(
                         p.getPosX(),
                         p.getPosY(),
-                        p.getSpeed() != null ? p.getSpeed() : 0.0
+                        p.getSpeed() != null ? p.getSpeed() : 0.0,
+                        p.getDistance() != null ? p.getDistance() : 0.0,
+                        p.getLapNumber() != null ? p.getLapNumber() : 1
                 ))
                 .collect(Collectors.toList());
 

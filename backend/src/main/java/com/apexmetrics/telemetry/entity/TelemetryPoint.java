@@ -35,4 +35,9 @@ public class TelemetryPoint {
 
     @Column(name = "geographic")
     private Boolean geographic;  // true = coordenadas GPS (OSM) | false = plano local (CRS.Simple)
+
+    // Número de vuelta del punto de telemetría (Bloque C — Comparación de vueltas).
+    // Se incrementa al detectar un reseteo en la distancia/posición durante el parseo.
+    @Column(name = "lap_number")
+    private Integer lapNumber;   // 1-based; valor por defecto 1 para sesiones sin vueltas múltiples
 }

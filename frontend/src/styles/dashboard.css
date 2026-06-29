@@ -421,3 +421,160 @@
     letter-spacing: 1.5px;
   }
 }
+
+/* =====================================================
+   TRACKMAP — Bloque C (Gradiente, Sectores, Vueltas)
+   ===================================================== */
+
+.trackmap-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Banner de error de tiles OSM */
+.trackmap-tile-error {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid var(--error-red, #E63946);
+  border-radius: 4px;
+  color: var(--error-red, #E63946);
+  font-family: monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  padding: 0.6rem 1rem;
+}
+
+/* Controles superiores: selector de vuelta + tooltip de velocidad */
+.trackmap-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.trackmap-lap-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trackmap-lap-label {
+  color: var(--text-muted, #888);
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+}
+
+.trackmap-lap-buttons {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.trackmap-lap-btn {
+  background: transparent;
+  border: 1px solid var(--border-color, #333);
+  color: var(--text-muted, #888);
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.trackmap-lap-btn:hover {
+  border-color: var(--neon-cyan, #00ffff);
+  color: var(--neon-cyan, #00ffff);
+}
+
+.trackmap-lap-btn.active {
+  background: rgba(0, 255, 255, 0.07);
+  border-color: var(--neon-cyan, #00ffff);
+  color: var(--neon-cyan, #00ffff);
+}
+
+/* Tooltip de velocidad al hover sobre el mapa */
+.trackmap-speed-tooltip {
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.trackmap-speed-value {
+  color: var(--neon-cyan, #00ffff);
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.trackmap-speed-unit {
+  color: var(--text-muted, #888);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* Leyenda del gradiente de velocidad (posicionada sobre el mapa) */
+.track-legend {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1rem;
+  z-index: 1000;
+  background: rgba(10, 10, 18, 0.88);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  min-width: 140px;
+  backdrop-filter: blur(6px);
+}
+
+.track-legend__title {
+  color: var(--text-muted, #888);
+  font-family: monospace;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  margin-bottom: 0.4rem;
+  text-align: center;
+}
+
+/* Barra de gradiente azul → rojo */
+.track-legend__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    hsl(240, 90%, 50%),
+    hsl(180, 90%, 50%),
+    hsl(120, 90%, 50%),
+    hsl(60, 90%, 50%),
+    hsl(0, 90%, 50%)
+  );
+  margin-bottom: 0.3rem;
+}
+
+.track-legend__labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted, #888);
+  font-family: monospace;
+  font-size: 0.7rem;
+}
+
+/* Responsive: ocultar leyenda en pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .track-legend {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    min-width: 110px;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .trackmap-controls {
+    gap: 0.75rem;
+  }
+}
