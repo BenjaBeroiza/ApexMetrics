@@ -1,5 +1,6 @@
 package com.apexmetrics.telemetry.controller;
 
+import com.apexmetrics.telemetry.dto.AIFeedbackDTO;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
@@ -155,5 +156,23 @@ public class TelemetryController {
             @AuthenticationPrincipal String userEmail) {
         telemetryService.eliminarSesion(id, userEmail);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Genera retroalimentación de coaching mediante IA (Gemini 2.5 Flash) a partir
+     * de los datos de telemetría de una sesión propia. Valida la propiedad de la
+     * sesión, resume las métricas clave y delega la generación al GeminiService.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * @param id identificador de la sesión a analizar
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con AIFeedbackDTO (sessionId + texto de retroalimentación)
+     */
+    @GetMapping("/sesiones/{id}/feedback-ia")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<AIFeedbackDTO> obtenerFeedbackIA(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerFeedbackIA(id, userEmail));
     }
 }

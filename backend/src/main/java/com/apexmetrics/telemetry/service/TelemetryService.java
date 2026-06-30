@@ -3,6 +3,7 @@ package com.apexmetrics.telemetry.service;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
+import com.apexmetrics.telemetry.dto.AIFeedbackDTO;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
@@ -43,6 +44,7 @@ public class TelemetryService implements ITelemetryService {
     private final TrackRepository trackRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final GeminiService geminiService;
 
     /**
      * Orquesta la carga completa de una sesión de telemetría.
@@ -277,6 +279,24 @@ public class TelemetryService implements ITelemetryService {
         }
         sessionRepository.deleteById(id);
         log.info("TelemetryService.eliminarSesion: sesión {} eliminada por usuario {}", id, userEmail);
+    }
+
+    /**
+     * Genera retroalimentación de coaching mediante Gemini 2.5 Flash a partir de
+     * la telemetría de una sesión propia. Valida la propiedad antes de procesar.
+     *
+     * @param sessionId identificador de la sesión a analizar
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return AIFeedbackDTO con el texto de retroalimentación generado por la IA
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AIFeedbackDTO obtenerFeedbackIA(Long sessionId, String userEmail) {
+        List<TelemetryPointDTO> points = puntosDeSesionPropia(sessionId, userEmail);
+        String feedback = geminiService.analizarTelemetria(points);
+        return new AIFeedbackDTO(sessionId, feedback);
     }
 
     /**
