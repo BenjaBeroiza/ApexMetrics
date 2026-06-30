@@ -3,6 +3,7 @@ package com.apexmetrics.auth.service;
 import com.apexmetrics.auth.dto.AuthResponseDTO;
 import com.apexmetrics.auth.dto.LoginRequestDTO;
 import com.apexmetrics.auth.dto.RegisterRequestDTO;
+import com.apexmetrics.auth.dto.UpdateProfileDTO;
 import com.apexmetrics.auth.dto.UserProfileDTO;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.entity.UserRole;
@@ -105,6 +106,20 @@ public class AuthService implements IAuthService {
     public UserProfileDTO getProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
+        return new UserProfileDTO(
+                user.getUsername(),
+                user.getEmail(),
+                user.getCountry(),
+                user.getRole().name()
+        );
+    }
+
+    @Override
+    public UserProfileDTO updateProfile(String email, UpdateProfileDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
+        user.setCountry(dto.getCountry());
+        userRepository.save(user);
         return new UserProfileDTO(
                 user.getUsername(),
                 user.getEmail(),

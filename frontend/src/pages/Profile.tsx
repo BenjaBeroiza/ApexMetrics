@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut, Search, Bell, Settings } from 'lucide-react';
 import '../styles/dashboard.css';
 
+const COUNTRIES = [
+  { group: '── SUDAMÉRICA ──', options: ['Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Ecuador', 'Paraguay', 'Perú', 'Uruguay', 'Venezuela'] },
+  { group: '── EUROPA ──', options: ['Alemania', 'Bélgica', 'Dinamarca', 'España', 'Finlandia', 'Francia', 'Grecia', 'Hungría', 'Italia', 'Países Bajos', 'Polonia', 'Portugal', 'Reino Unido', 'República Checa', 'Rumania', 'Suecia', 'Suiza'] },
+  { group: '── OTROS ──', options: ['Otro'] },
+];
+
 interface ProfileData {
   username: string;
   email: string;
@@ -24,7 +30,8 @@ export default function Profile() {
     role: localStorage.getItem('apex_role') || undefined,
   });
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Redirige si no hay sesión activa
   useEffect(() => {
@@ -54,8 +61,31 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    setSaveStatus('success');
-    setTimeout(() => setSaveStatus('idle'), 2500);
+    setSaveStatus('saving');
+    setSaveError(null);
+    try {
+      const response = await fetch('/api/v1/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ country: profile.country }),
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        setProfile(updated);
+        localStorage.setItem('apex_country', updated.country ?? '');
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 2500);
+      } else {
+        setSaveStatus('error');
+        setSaveError('Error al guardar los cambios');
+      }
+    } catch {
+      setSaveStatus('error');
+      setSaveError('Error de conexión');
+    }
   };
 
   return (
@@ -111,7 +141,7 @@ export default function Profile() {
         </div>
         <div className="page-header">
           <h1>MI PERFIL</h1>
-          <p>Información de tu cuenta de piloto. Próximamente: edición completa de datos.</p>
+          <p>Información de tu cuenta de piloto. Puedes actualizar tu país de origen.</p>
         </div>
 
         {/* TARJETA DE PERFIL */}
@@ -211,20 +241,30 @@ export default function Profile() {
                 <Globe size={12} />
                 PAÍS DE ORIGEN
               </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  value={profile.country}
-                  readOnly
-                  style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                />
-              </div>
+              <select
+                className="neon-select"
+                value={profile.country}
+                onChange={(e) => setProfile({ ...profile, country: e.target.value })}
+              >
+                <option value="" disabled>Selecciona tu país</option>
+                {COUNTRIES.map(({ group, options }) => (
+                  <optgroup key={group} label={group}>
+                    {options.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
 
-            {/* Estado del guardado */}
             {saveStatus === 'success' && (
               <p style={{ color: '#00ff00', fontSize: '0.8rem', margin: 0 }}>
                 Perfil sincronizado correctamente.
+              </p>
+            )}
+            {saveStatus === 'error' && saveError && (
+              <p style={{ color: 'var(--error-red)', fontSize: '0.8rem', margin: 0 }}>
+                {saveError}
               </p>
             )}
 
@@ -232,9 +272,9 @@ export default function Profile() {
               className="neon-button"
               onClick={handleSave}
               style={{ padding: '0.8rem', marginTop: 'auto' }}
-              disabled={saveStatus !== 'idle'}
+              disabled={saveStatus === 'saving'}
             >
-              {saveStatus === 'success' ? 'SINCRONIZADO' : 'GUARDAR CAMBIOS'}
+              {saveStatus === 'saving' ? 'GUARDANDO...' : saveStatus === 'success' ? 'SINCRONIZADO' : 'GUARDAR CAMBIOS'}
             </button>
           </div>
         </div>

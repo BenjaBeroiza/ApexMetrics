@@ -1,12 +1,16 @@
 package com.apexmetrics.auth.controller;
 
+import com.apexmetrics.auth.dto.UpdateProfileDTO;
 import com.apexmetrics.auth.dto.UserProfileDTO;
 import com.apexmetrics.auth.service.IAuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,5 +36,13 @@ public class UserController {
     @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER', 'ADMIN')")
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal String userEmail) {
         return ResponseEntity.ok(authService.getProfile(userEmail));
+    }
+
+    @PutMapping("/profile")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER', 'ADMIN')")
+    public ResponseEntity<UserProfileDTO> updateProfile(
+            @AuthenticationPrincipal String userEmail,
+            @Valid @RequestBody UpdateProfileDTO dto) {
+        return ResponseEntity.ok(authService.updateProfile(userEmail, dto));
     }
 }

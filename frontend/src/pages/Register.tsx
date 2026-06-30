@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/auth.css';
 
+const COUNTRIES = [
+  { group: '── SUDAMÉRICA ──', options: ['Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Ecuador', 'Paraguay', 'Perú', 'Uruguay', 'Venezuela'] },
+  { group: '── EUROPA ──', options: ['Alemania', 'Bélgica', 'Dinamarca', 'España', 'Finlandia', 'Francia', 'Grecia', 'Hungría', 'Italia', 'Países Bajos', 'Polonia', 'Portugal', 'Reino Unido', 'República Checa', 'Rumania', 'Suecia', 'Suiza'] },
+  { group: '── OTROS ──', options: ['Otro'] },
+];
+
 export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -14,7 +20,7 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null);
   };
@@ -97,21 +103,27 @@ export default function Register() {
 
           <div className="input-group">
             <label>PAÍS</label>
-            <div className="input-wrapper">
-              <input
-                type="text"
-                name="country"
-                placeholder="Ej. Chile"
-                value={formData.country}
-                onChange={handleChange}
-                required
-              />
-            </div>
+            <select
+              name="country"
+              className="neon-select"
+              value={formData.country}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Selecciona tu país</option>
+              {COUNTRIES.map(({ group, options }) => (
+                <optgroup key={group} label={group}>
+                  {options.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
 
           <div className="input-group">
             <label>NUEVA CLAVE DE AUTORIZACIÓN</label>
-            <div className={`input-wrapper ${error && error.includes('16') ? 'error' : ''}`}>
+            <div className={`input-wrapper ${error && error.includes('8') ? 'error' : ''}`}>
               <input
                 type="password"
                 name="password"

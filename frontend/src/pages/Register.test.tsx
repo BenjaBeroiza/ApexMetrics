@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Register from './Register';
 
-// Helper: renderiza Register envuelto en MemoryRouter
 const renderRegister = () =>
   render(
     <MemoryRouter>
@@ -11,7 +10,6 @@ const renderRegister = () =>
     </MemoryRouter>
   );
 
-// Helper: completa el formulario con valores válidos
 const fillValidForm = () => {
   fireEvent.change(screen.getByPlaceholderText('Ej. Piloto 1'), {
     target: { name: 'username', value: 'PilotoTest' },
@@ -19,7 +17,7 @@ const fillValidForm = () => {
   fireEvent.change(screen.getByPlaceholderText('nuevo@apex.sim'), {
     target: { name: 'email', value: 'test@apex.sim' },
   });
-  fireEvent.change(screen.getByPlaceholderText('Ej. Chile'), {
+  fireEvent.change(screen.getByRole('combobox'), {
     target: { name: 'country', value: 'Chile' },
   });
 };
@@ -40,9 +38,10 @@ describe('Register — renderizado', () => {
     expect(screen.getByPlaceholderText('nuevo@apex.sim')).toBeInTheDocument();
   });
 
-  it('muestra el campo de país', () => {
+  it('muestra el selector de país', () => {
     renderRegister();
-    expect(screen.getByPlaceholderText('Ej. Chile')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByText('Selecciona tu país')).toBeInTheDocument();
   });
 
   it('muestra el campo de contraseña', () => {
@@ -129,7 +128,6 @@ describe('Register — integración con API', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /SOLICITAR ACCESO/i }));
 
-    // Verificar que el fetch se llamó con los datos correctos
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/v1/auth/register',
