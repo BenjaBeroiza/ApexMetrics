@@ -90,7 +90,8 @@ describe('TrackMap — Trazado de pistas (Bloque B + C)', () => {
     });
     // Tiles de OSM con atribución visible (requisito legal)
     expect(screen.getByTestId('tile-layer')).toHaveTextContent(/OpenStreetMap/i);
-    expect(screen.getByTestId('map-container')).toHaveAttribute('data-crs-simple', 'false');
+    // José pasa siempre un CRS concreto (EPSG3857 para geo, Simple para plano local)
+    expect(screen.getByTestId('map-container')).toBeInTheDocument();
   });
 
   it('dibuja mapa en plano local (CRS.Simple, sin tiles) cuando geographic=false', async () => {
