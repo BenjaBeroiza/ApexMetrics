@@ -181,6 +181,12 @@ export default function Dashboard() {
                       VER TRAZADO
                     </button>
                     <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/feedback-ia`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      ANÁLISIS IA
+                    </button>
+                    <button
                       onClick={() => handleEliminarSesion(sesion.sessionId)}
                       style={{ background: 'none', border: 'none', color: 'var(--error-red)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >

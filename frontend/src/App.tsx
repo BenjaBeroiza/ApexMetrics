@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import SessionAnalysis from './pages/SessionAnalysis';
 import TrackView from './pages/TrackView';
 import ComparacionVueltas from './pages/ComparacionVueltas';
+import FeedbackIA from './pages/FeedbackIA';
 
 /**
  * Componente raíz de enrutamiento de la SPA.
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/sesiones/:id/analisis" element={<SessionAnalysis />} />
         <Route path="/dashboard/sesiones/:id/trazado" element={<TrackView />} />
+        <Route path="/dashboard/sesiones/:id/feedback-ia" element={<FeedbackIA />} />
         <Route path="/comparacion" element={<ComparacionVueltas />} />
         <Route path="/upload" element={<UploadTelemetry />} />
         <Route path="/profile" element={<Profile />} />
