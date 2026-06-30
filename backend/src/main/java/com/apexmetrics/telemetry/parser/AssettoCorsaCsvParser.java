@@ -67,20 +67,20 @@ public class AssettoCorsaCsvParser implements CsvParser {
             // Assetto Corsa exporta coordenadas de mundo local → plano CRS.Simple (sin tiles).
             boolean hasPos = hasAll(headerIndex, List.of("posX", "posZ"));
 
-            // Detección de vuelta: se incrementa el contador cuando el valor del campo
-            // "pos" (número de fila secuencial) disminuye respecto al anterior,
-            // lo que indica un reseteo al inicio de una nueva vuelta.
-            // Bloque C — Comparación de vueltas.
+            // Detección de vuelta: se incrementa el contador cuando el valor de la
+            // columna "pos" disminuye respecto al punto anterior, lo que indica
+            // un reseteo al inicio de una nueva vuelta. Bloque C — Comparación de vueltas.
             int lapNumber = 1;
-            int prevRowNum = -1;
+            int prevPosValue = -1;
 
             String[] row;
             int rowNum = 0;
             while ((row = reader.readNext()) != null) {
-                if (prevRowNum >= 0 && rowNum <= prevRowNum) {
+                int posValue = parseIntPos(row, headerIndex);
+                if (prevPosValue >= 0 && posValue <= prevPosValue) {
                     lapNumber++;
                 }
-                prevRowNum = rowNum;
+                prevPosValue = posValue;
                 points.add(buildTelemetryPoint(row, headerIndex, rowNum++, hasPos, lapNumber));
             }
         } catch (CsvInvalidSchemaException e) {
@@ -143,6 +143,18 @@ public class AssettoCorsaCsvParser implements CsvParser {
         }
         return p;
     }
+    /** Lee el valor entero de la columna "pos" para detectar reseteos de vuelta. */
+    private int parseIntPos(String[] row, Map<String, Integer> idx) {
+        if (!idx.containsKey("pos")) return 0;
+        int i = idx.get("pos");
+        if (i >= row.length || row[i].isBlank()) return 0;
+        try {
+            return (int) Double.parseDouble(row[i].trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     /** Abre un CSVReader (OpenCSV) sobre el stream del MultipartFile asumiendo codificación UTF-8. */
     private CSVReader openCsvReader(MultipartFile file) throws Exception {
         return new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
