@@ -24,7 +24,7 @@ describe('Login — renderizado', () => {
 
   it('muestra el campo de contraseña', () => {
     renderLogin();
-    expect(screen.getByPlaceholderText('Mínimo 16 caracteres')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Mínimo 8 caracteres')).toBeInTheDocument();
   });
 
   it('muestra el botón de inicio de sesión', () => {
@@ -43,19 +43,19 @@ describe('Login — validaciones de formulario', () => {
     vi.clearAllMocks();
   });
 
-  it('muestra error si la contraseña tiene menos de 16 caracteres al enviar', async () => {
+  it('muestra error si la contraseña tiene menos de 8 caracteres al enviar', async () => {
     renderLogin();
 
     fireEvent.change(screen.getByPlaceholderText('correo@ejemplo.com'), {
       target: { name: 'email', value: 'test@apex.sim' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'corta' },
     });
     fireEvent.click(screen.getByRole('button', { name: /INICIAR SESIÓN/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Mínimo 16 caracteres requeridos/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mínimo 8 caracteres requeridos/i)).toBeInTheDocument();
     });
   });
 
@@ -88,7 +88,7 @@ describe('Login — integración con API', () => {
     fireEvent.change(screen.getByPlaceholderText('correo@ejemplo.com'), {
       target: { name: 'email', value: 'piloto@apex.sim' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_super_segura_32' },
     });
     fireEvent.click(screen.getByRole('button', { name: /INICIAR SESIÓN/i }));
@@ -110,7 +110,7 @@ describe('Login — integración con API', () => {
     fireEvent.change(screen.getByPlaceholderText('correo@ejemplo.com'), {
       target: { name: 'email', value: 'piloto@apex.sim' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_incorrecta_pero_larga' },
     });
     fireEvent.click(screen.getByRole('button', { name: /INICIAR SESIÓN/i }));
@@ -128,7 +128,7 @@ describe('Login — integración con API', () => {
     fireEvent.change(screen.getByPlaceholderText('correo@ejemplo.com'), {
       target: { name: 'email', value: 'piloto@apex.sim' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_valida_para_test_larga' },
     });
     fireEvent.click(screen.getByRole('button', { name: /INICIAR SESIÓN/i }));
