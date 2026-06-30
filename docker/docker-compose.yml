@@ -27,7 +27,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-apexuser}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apexpass}
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
