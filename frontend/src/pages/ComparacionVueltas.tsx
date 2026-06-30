@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Trophy, Upload, User, LogOut } from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -34,16 +34,10 @@ interface FilaComparacion {
   brakeB?: number;
 }
 
-/**
- * Comparación de vueltas: permite elegir dos sesiones propias y superpone sus
- * curvas de velocidad y frenado en un mismo gráfico para identificar diferencias.
- * Consume GET /api/v1/telemetry/comparacion?sessionA&sessionB con el JWT del usuario.
- *
- * Implementa RF06 — Comparación de vueltas.
- */
 export default function ComparacionVueltas() {
   const navigate = useNavigate();
   const token = localStorage.getItem('apex_token');
+  const username = localStorage.getItem('apex_username') || 'Piloto';
 
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [sesionA, setSesionA] = useState<string>('');
@@ -52,7 +46,6 @@ export default function ComparacionVueltas() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Carga el historial del usuario para poblar los selectores de sesión.
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -66,7 +59,6 @@ export default function ComparacionVueltas() {
       .catch(() => setError('No se pudo cargar el historial de sesiones.'));
   }, [token, navigate]);
 
-  // Cuando ambas sesiones están elegidas (y son distintas), pide la comparación.
   useEffect(() => {
     if (!sesionA || !sesionB || sesionA === sesionB) {
       setDatos([]);
@@ -92,12 +84,9 @@ export default function ComparacionVueltas() {
         setError(e === 'forbidden' ? 'No tienes permiso sobre alguna de las sesiones.' : 'No se pudo cargar la comparación.');
       })
       .finally(() => activo && setLoading(false));
-    return () => {
-      activo = false;
-    };
+    return () => { activo = false; };
   }, [sesionA, sesionB, token]);
 
-  // Alinea por índice de muestra los puntos de ambas sesiones en una sola serie.
   const combinarPuntos = (a: Punto[], b: Punto[]): FilaComparacion[] => {
     const max = Math.max(a.length, b.length);
     const filas: FilaComparacion[] = [];
@@ -116,18 +105,61 @@ export default function ComparacionVueltas() {
   const etiqueta = (s: Sesion) =>
     `${s.trackName} · ${new Date(s.uploadedAt).toLocaleDateString()} (#${s.sessionId})`;
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
+
   return (
     <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>APEXMETRICS</h2>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>v2.0</span>
+        </div>
+        <nav className="sidebar-nav">
+          <button className="nav-item active" onClick={() => navigate('/dashboard')}>
+            <LayoutDashboard size={14} style={{ marginRight: '0.5rem' }} />
+            DASHBOARD
+          </button>
+          <button className="nav-item" onClick={() => navigate('/leaderboard')}>
+            <Trophy size={14} style={{ marginRight: '0.5rem' }} />
+            CLASIFICACIÓN
+          </button>
+          <button className="nav-item" onClick={() => navigate('/upload')}>
+            <Upload size={14} style={{ marginRight: '0.5rem' }} />
+            SUBIR TELEMETRÍA
+          </button>
+          <button className="nav-item" onClick={() => navigate('/profile')}>
+            <User size={14} style={{ marginRight: '0.5rem' }} />
+            MI PERFIL
+          </button>
+        </nav>
+        <div style={{ marginTop: 'auto', padding: '0 1rem' }}>
+          <button
+            className="neon-button"
+            style={{ fontSize: '0.7rem', padding: '0.8rem', background: 'transparent', color: 'var(--error-red)', borderColor: 'var(--error-red)' }}
+            onClick={handleLogout}
+          >
+            <LogOut size={12} style={{ marginRight: '0.4rem' }} />
+            CERRAR SESIÓN
+          </button>
+        </div>
+      </aside>
+
       <main className="main-content">
         <div className="page-header" style={{ marginBottom: '1.5rem' }}>
           <button
             onClick={() => navigate('/dashboard')}
             style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1rem' }}
           >
-            <ArrowLeft size={16} /> VOLVER AL DASHBOARD
+            ← VOLVER AL DASHBOARD
           </button>
           <h1 style={{ textTransform: 'uppercase' }}>COMPARACIÓN DE VUELTAS</h1>
           <p>Superpone las curvas de velocidad y frenado de dos sesiones.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+            Usuario: {username.toUpperCase()}
+          </p>
         </div>
 
         {sesiones.length < 2 ? (
@@ -139,7 +171,7 @@ export default function ComparacionVueltas() {
             <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
               <div className="input-group">
                 <label style={{ color: '#E63946' }}>SESIÓN A</label>
-                <select value={sesionA} onChange={(e) => setSesionA(e.target.value)} aria-label="Sesión A">
+                <select value={sesionA} onChange={(e) => setSesionA(e.target.value)} aria-label="Sesión A" className="neon-select">
                   <option value="">— Selecciona —</option>
                   {sesiones.map((s) => (
                     <option key={s.sessionId} value={s.sessionId}>{etiqueta(s)}</option>
@@ -148,7 +180,7 @@ export default function ComparacionVueltas() {
               </div>
               <div className="input-group">
                 <label style={{ color: '#1B6CA8' }}>SESIÓN B</label>
-                <select value={sesionB} onChange={(e) => setSesionB(e.target.value)} aria-label="Sesión B">
+                <select value={sesionB} onChange={(e) => setSesionB(e.target.value)} aria-label="Sesión B" className="neon-select">
                   <option value="">— Selecciona —</option>
                   {sesiones.map((s) => (
                     <option key={s.sessionId} value={s.sessionId}>{etiqueta(s)}</option>
