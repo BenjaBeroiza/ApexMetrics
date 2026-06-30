@@ -16,6 +16,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-apexpass}
       - JWT_SECRET=${JWT_SECRET:-apexmetrics-dev-secret-change-in-production-min32chars}
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-3600000}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     depends_on:
       - db
 

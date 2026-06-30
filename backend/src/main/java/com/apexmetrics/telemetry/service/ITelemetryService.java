@@ -1,5 +1,6 @@
 package com.apexmetrics.telemetry.service;
 
+import com.apexmetrics.telemetry.dto.AIFeedbackDTO;
 import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
 import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
@@ -95,4 +96,15 @@ public interface ITelemetryService {
      * @param userEmail email del usuario autenticado
      */
     void eliminarSesion(Long id, String userEmail);
+
+    /**
+     * Genera retroalimentación de coaching mediante IA (Gemini 2.5 Flash) a partir
+     * de la telemetría de una sesión propia del usuario. Valida la propiedad de la
+     * sesión antes de procesar los datos.
+     *
+     * @param sessionId identificador de la sesión a analizar
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return AIFeedbackDTO con el sessionId y el texto de retroalimentación generado
+     */
+    AIFeedbackDTO obtenerFeedbackIA(Long sessionId, String userEmail);
 }
