@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Profile from './Profile';
 
@@ -57,6 +57,61 @@ describe('Profile — RF03', () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue('CacheUser')).toBeInTheDocument();
       expect(screen.getByDisplayValue('cache@apexmetrics.com')).toBeInTheDocument();
+    });
+  });
+
+  it('muestra "GUARDANDO..." al hacer clic en guardar', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'U', email: 'u@u.com', country: 'Chile', role: 'PILOT' }),
+      })
+      .mockReturnValueOnce(new Promise(() => { /* pending */ }));
+
+    renderProfile();
+    await waitFor(() => screen.getByText('GUARDAR CAMBIOS'));
+
+    fireEvent.click(screen.getByText('GUARDAR CAMBIOS'));
+    expect(screen.getByText('GUARDANDO...')).toBeInTheDocument();
+  });
+
+  it('muestra "SINCRONIZADO" y actualiza localStorage tras guardar con éxito', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'U', email: 'u@u.com', country: 'Chile', role: 'PILOT' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'U', email: 'u@u.com', country: 'Argentina', role: 'PILOT' }),
+      });
+
+    renderProfile();
+    await waitFor(() => screen.getByText('GUARDAR CAMBIOS'));
+
+    fireEvent.click(screen.getByText('GUARDAR CAMBIOS'));
+
+    await waitFor(() => {
+      expect(screen.getByText('SINCRONIZADO')).toBeInTheDocument();
+    });
+    expect(localStorage.getItem('apex_country')).toBe('Argentina');
+  });
+
+  it('muestra error cuando el PUT falla', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ username: 'U', email: 'u@u.com', country: 'Chile', role: 'PILOT' }),
+      })
+      .mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+
+    renderProfile();
+    await waitFor(() => screen.getByText('GUARDAR CAMBIOS'));
+
+    fireEvent.click(screen.getByText('GUARDAR CAMBIOS'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Error al guardar/i)).toBeInTheDocument();
     });
   });
 });
