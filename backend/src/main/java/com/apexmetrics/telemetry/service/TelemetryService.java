@@ -3,7 +3,12 @@ package com.apexmetrics.telemetry.service;
 import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
+import com.apexmetrics.telemetry.dto.AIFeedbackDTO;
+import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
+import com.apexmetrics.telemetry.dto.TrackPathDTO;
+import com.apexmetrics.telemetry.dto.TrackPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.apexmetrics.telemetry.entity.TelemetrySession;
@@ -39,6 +44,7 @@ public class TelemetryService implements ITelemetryService {
     private final TrackRepository trackRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final GeminiService geminiService;
 
     /**
      * Orquesta la carga completa de una sesión de telemetría.
@@ -135,6 +141,122 @@ public class TelemetryService implements ITelemetryService {
     }
 
     /**
+     * Retorna los puntos de telemetría de una sesión propia para el dashboard analítico.
+     * Verifica primero que la sesión exista y que pertenezca al usuario autenticado
+     * (mismo control de autorización que eliminarSesion, evita IDOR), luego mapea los
+     * puntos a DTOs ligeros con distance/speed/brake/throttle. Marcado readOnly para
+     * evitar dirty-checking de Hibernate.
+     *
+     * Implementa RF05 — Dashboard analítico.
+     *
+     * @param sessionId identificador de la sesión cuyos puntos se solicitan
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión existe pero pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<TelemetryPointDTO> obtenerPuntos(Long sessionId, String userEmail) {
+        return puntosDeSesionPropia(sessionId, userEmail);
+    }
+
+    /**
+     * Retorna los puntos de dos sesiones propias para compararlas en el frontend.
+     * Reutiliza la validación de propiedad de cada sesión; si alguna no pertenece al
+     * usuario, la operación completa falla con AccessDeniedException (no se devuelven
+     * datos parciales). Marcado readOnly por ser solo lectura.
+     *
+     * Implementa RF06 — Comparación de vueltas.
+     *
+     * @param sessionAId identificador de la primera sesión a comparar
+     * @param sessionBId identificador de la segunda sesión a comparar
+     * @param userEmail email del usuario autenticado, dueño esperado de ambas sesiones
+     * @return ComparacionDTO con los puntos de la sesión A y de la sesión B
+     * @throws IllegalArgumentException si alguna sesión no existe
+     * @throws AccessDeniedException si alguna sesión pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ComparacionDTO compararSesiones(Long sessionAId, Long sessionBId, String userEmail) {
+        List<TelemetryPointDTO> puntosA = puntosDeSesionPropia(sessionAId, userEmail);
+        List<TelemetryPointDTO> puntosB = puntosDeSesionPropia(sessionBId, userEmail);
+        return new ComparacionDTO(puntosA, puntosB);
+    }
+
+    /**
+     * Retorna la traza (recorrido 2D) de una sesión propia para dibujarla sobre el mapa
+     * del frontend. Reutiliza la validación de propiedad (mismo control anti-IDOR que
+     * obtenerPuntos), conserva solo los puntos con posición (posX/posY != null) y los mapea
+     * a TrackPointDTO. El flag geographic se toma del primer punto con posición; si la sesión
+     * no tiene posición, points queda vacío y geographic en false. Marcado readOnly por ser
+     * solo lectura.
+     *
+     * Implementa el trazado de pistas (Bloque B — OpenStreetMap / Leaflet).
+     *
+     * @param sessionId identificador de la sesión cuya traza se solicita
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return TrackPathDTO con el flag geographic y los puntos con posición (puede estar vacío)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión existe pero pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TrackPathDTO obtenerTrazado(Long sessionId, String userEmail) {
+        TelemetrySession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
+        if (!session.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("No tienes permiso para ver esta sesión");
+        }
+
+        List<TelemetryPoint> conPosicion = pointRepository.findBySessionId(sessionId).stream()
+                .filter(p -> p.getPosX() != null && p.getPosY() != null)
+                .collect(Collectors.toList());
+
+        List<TrackPointDTO> points = conPosicion.stream()
+                .map(p -> new TrackPointDTO(
+                        p.getPosX(),
+                        p.getPosY(),
+                        p.getSpeed() != null ? p.getSpeed() : 0.0,
+                        p.getDistance() != null ? p.getDistance() : 0.0,
+                        p.getLapNumber() != null ? p.getLapNumber() : 1
+                ))
+                .collect(Collectors.toList());
+
+        boolean geographic = !conPosicion.isEmpty()
+                && Boolean.TRUE.equals(conPosicion.get(0).getGeographic());
+
+        return new TrackPathDTO(geographic, points);
+    }
+
+    /**
+     * Valida que la sesión exista y pertenezca al usuario autenticado, y devuelve sus
+     * puntos mapeados a TelemetryPointDTO. Centraliza el control de autorización a nivel
+     * de recurso (evita IDOR) reutilizado por obtenerPuntos (RF05) y compararSesiones (RF06).
+     *
+     * @param sessionId identificador de la sesión
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión pertenece a otro usuario
+     */
+    private List<TelemetryPointDTO> puntosDeSesionPropia(Long sessionId, String userEmail) {
+        TelemetrySession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Sesión no encontrada: " + sessionId));
+        if (!session.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("No tienes permiso para ver esta sesión");
+        }
+        return pointRepository.findBySessionId(sessionId).stream()
+                .map(p -> new TelemetryPointDTO(
+                        p.getDistance(),
+                        p.getSpeed(),
+                        p.getBrake(),
+                        p.getThrottle()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Elimina una sesión propia del usuario autenticado.
      * Antes de borrar verifica que el dueño de la sesión sea el solicitante, evitando
      * que un usuario pueda eliminar sesiones ajenas mediante un id arbitrario (IDOR).
@@ -157,6 +279,24 @@ public class TelemetryService implements ITelemetryService {
         }
         sessionRepository.deleteById(id);
         log.info("TelemetryService.eliminarSesion: sesión {} eliminada por usuario {}", id, userEmail);
+    }
+
+    /**
+     * Genera retroalimentación de coaching mediante Gemini 2.5 Flash a partir de
+     * la telemetría de una sesión propia. Valida la propiedad antes de procesar.
+     *
+     * @param sessionId identificador de la sesión a analizar
+     * @param userEmail email del usuario autenticado, dueño esperado de la sesión
+     * @return AIFeedbackDTO con el texto de retroalimentación generado por la IA
+     * @throws IllegalArgumentException si la sesión no existe
+     * @throws AccessDeniedException si la sesión pertenece a otro usuario
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public AIFeedbackDTO obtenerFeedbackIA(Long sessionId, String userEmail) {
+        List<TelemetryPointDTO> points = puntosDeSesionPropia(sessionId, userEmail);
+        String feedback = geminiService.analizarTelemetria(points);
+        return new AIFeedbackDTO(sessionId, feedback);
     }
 
     /**

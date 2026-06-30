@@ -5,6 +5,7 @@ import com.apexmetrics.auth.entity.UserRole;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
 import com.apexmetrics.telemetry.entity.Category;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.apexmetrics.telemetry.entity.TelemetrySession;
@@ -43,6 +44,7 @@ class TelemetryServiceTest {
     @Mock private CategoryRepository categoryRepository;
     @Mock private UserRepository userRepository;
     @Mock private CsvParser mockParser;
+    @Mock private GeminiService geminiService;
 
     private TelemetryService telemetryService;
 
@@ -56,7 +58,8 @@ class TelemetryServiceTest {
         telemetryService = new TelemetryService(
                 List.of(mockParser),
                 sessionRepository, pointRepository,
-                trackRepository, categoryRepository, userRepository
+                trackRepository, categoryRepository, userRepository,
+                geminiService
         );
 
         track = Track.builder().id(1L).name("Monza").country("Italia").build();
@@ -233,6 +236,180 @@ class TelemetryServiceTest {
         List<SessionSummaryDTO> resultado = telemetryService.obtenerHistorial("piloto@apexmetrics.com");
 
         assertThat(resultado).isEmpty();
+    }
+
+    // ── RF05: Dashboard analítico (obtenerPuntos) ─────────────
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos del dueño retorna lista de puntos mapeados")
+    void obtenerPuntos_propietario_retornaPuntos() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        List<TelemetryPoint> puntos = buildPoints(3);
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesion));
+        when(pointRepository.findBySessionId(10L)).thenReturn(puntos);
+
+        List<TelemetryPointDTO> resultado = telemetryService.obtenerPuntos(10L, "piloto@apexmetrics.com");
+
+        assertThat(resultado).hasSize(3);
+        assertThat(resultado.get(0).getDistance()).isEqualTo(0.0);
+        assertThat(resultado.get(0).getSpeed()).isEqualTo(100.0);
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos de sesión ajena lanza AccessDeniedException")
+    void obtenerPuntos_usuarioAjeno_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionAjena = TelemetrySession.builder()
+                .id(10L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionAjena));
+
+        assertThatThrownBy(() -> telemetryService.obtenerPuntos(10L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+
+        verify(pointRepository, never()).findBySessionId(any());
+    }
+
+    @Test
+    @DisplayName("RF05 — obtenerPuntos con sesión inexistente lanza IllegalArgumentException")
+    void obtenerPuntos_sesionNoExiste_lanzaExcepcion() {
+        when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> telemetryService.obtenerPuntos(99L, "piloto@apexmetrics.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Sesión no encontrada");
+    }
+
+    // ── RF06: Comparación de vueltas (compararSesiones) ───────
+
+    @Test
+    @DisplayName("RF06 — compararSesiones del dueño retorna puntos de ambas sesiones")
+    void compararSesiones_propietario_retornaAmbasSesiones() {
+        TelemetrySession sesionA = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        TelemetrySession sesionB = TelemetrySession.builder()
+                .id(20L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionA));
+        when(sessionRepository.findById(20L)).thenReturn(Optional.of(sesionB));
+        when(pointRepository.findBySessionId(10L)).thenReturn(buildPoints(3));
+        when(pointRepository.findBySessionId(20L)).thenReturn(buildPoints(5));
+
+        var resultado = telemetryService.compararSesiones(10L, 20L, "piloto@apexmetrics.com");
+
+        assertThat(resultado.getSesionA()).hasSize(3);
+        assertThat(resultado.getSesionB()).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("RF06 — compararSesiones lanza AccessDeniedException si la segunda sesión es ajena")
+    void compararSesiones_segundaSesionAjena_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionA = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+        TelemetrySession sesionBAjena = TelemetrySession.builder()
+                .id(20L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionA));
+        when(sessionRepository.findById(20L)).thenReturn(Optional.of(sesionBAjena));
+        when(pointRepository.findBySessionId(10L)).thenReturn(buildPoints(3));
+
+        assertThatThrownBy(() -> telemetryService.compararSesiones(10L, 20L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+    }
+
+    // ── Trazado de pistas (obtenerTrazado) ────────────────────
+
+    @Test
+    @DisplayName("Trazado — obtenerTrazado del dueño filtra nulls y mapea posición y geographic")
+    void obtenerTrazado_propietario_filtraNullsYMapea() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        // 2 puntos con posición GPS + 1 sin posición (debe descartarse)
+        TelemetryPoint conPos1 = new TelemetryPoint();
+        conPos1.setSpeed(150.0);
+        conPos1.setPosX(9.28);  // longitud
+        conPos1.setPosY(45.62); // latitud
+        conPos1.setGeographic(true);
+        TelemetryPoint conPos2 = new TelemetryPoint();
+        conPos2.setSpeed(160.0);
+        conPos2.setPosX(9.29);
+        conPos2.setPosY(45.63);
+        conPos2.setGeographic(true);
+        TelemetryPoint sinPos = new TelemetryPoint();
+        sinPos.setSpeed(170.0);
+        sinPos.setPosX(null);
+        sinPos.setPosY(null);
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesion));
+        when(pointRepository.findBySessionId(10L)).thenReturn(List.of(conPos1, conPos2, sinPos));
+
+        var resultado = telemetryService.obtenerTrazado(10L, "piloto@apexmetrics.com");
+
+        assertThat(resultado.isGeographic()).isTrue();
+        assertThat(resultado.getPoints()).hasSize(2);
+        assertThat(resultado.getPoints().get(0).getX()).isEqualTo(9.28);
+        assertThat(resultado.getPoints().get(0).getY()).isEqualTo(45.62);
+        assertThat(resultado.getPoints().get(0).getSpeed()).isEqualTo(150.0);
+    }
+
+    @Test
+    @DisplayName("Trazado — obtenerTrazado sin puntos con posición retorna path vacío y geographic false")
+    void obtenerTrazado_sinPosicion_retornaPathVacio() {
+        TelemetrySession sesion = TelemetrySession.builder()
+                .id(10L).user(user).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesion));
+        // puntos clásicos sin posición (posX/posY null)
+        when(pointRepository.findBySessionId(10L)).thenReturn(buildPoints(3));
+
+        var resultado = telemetryService.obtenerTrazado(10L, "piloto@apexmetrics.com");
+
+        assertThat(resultado.getPoints()).isEmpty();
+        assertThat(resultado.isGeographic()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trazado — obtenerTrazado de sesión ajena lanza AccessDeniedException")
+    void obtenerTrazado_usuarioAjeno_lanzaAccessDeniedException() {
+        User otroUsuario = User.builder()
+                .id(2L).email("otro@test.com").username("otro").role(UserRole.PILOT).build();
+        TelemetrySession sesionAjena = TelemetrySession.builder()
+                .id(10L).user(otroUsuario).track(track).category(category)
+                .uploadedAt(LocalDateTime.now()).build();
+
+        when(sessionRepository.findById(10L)).thenReturn(Optional.of(sesionAjena));
+
+        assertThatThrownBy(() -> telemetryService.obtenerTrazado(10L, "piloto@apexmetrics.com"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No tienes permiso");
+
+        verify(pointRepository, never()).findBySessionId(any());
+    }
+
+    @Test
+    @DisplayName("Trazado — obtenerTrazado con sesión inexistente lanza IllegalArgumentException")
+    void obtenerTrazado_sesionNoExiste_lanzaExcepcion() {
+        when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> telemetryService.obtenerTrazado(99L, "piloto@apexmetrics.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Sesión no encontrada");
     }
 
     // ── RF06: Eliminar sesión ─────────────────────────────────

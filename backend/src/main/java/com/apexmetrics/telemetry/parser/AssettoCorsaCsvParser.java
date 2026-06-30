@@ -63,10 +63,25 @@ public class AssettoCorsaCsvParser implements CsvParser {
             Map<String, Integer> headerIndex = buildHeaderIndex(headers);
             validateHeaders(headerIndex);
 
+            // Posición local opcional: solo si el CSV trae las columnas posX y posZ.
+            // Assetto Corsa exporta coordenadas de mundo local → plano CRS.Simple (sin tiles).
+            boolean hasPos = hasAll(headerIndex, List.of("posX", "posZ"));
+
+            // Detección de vuelta: se incrementa el contador cuando el valor de la
+            // columna "pos" disminuye respecto al punto anterior, lo que indica
+            // un reseteo al inicio de una nueva vuelta. Bloque C — Comparación de vueltas.
+            int lapNumber = 1;
+            int prevPosValue = -1;
+
             String[] row;
             int rowNum = 0;
             while ((row = reader.readNext()) != null) {
-                points.add(buildTelemetryPoint(row, headerIndex, rowNum++));
+                int posValue = parseIntPos(row, headerIndex);
+                if (prevPosValue >= 0 && posValue <= prevPosValue) {
+                    lapNumber++;
+                }
+                prevPosValue = posValue;
+                points.add(buildTelemetryPoint(row, headerIndex, rowNum++, hasPos, lapNumber));
             }
         } catch (CsvInvalidSchemaException e) {
             throw e;
@@ -75,6 +90,11 @@ public class AssettoCorsaCsvParser implements CsvParser {
             throw new CsvInvalidSchemaException("Error al procesar el CSV de Assetto Corsa: " + e.getMessage(), "UNKNOWN");
         }
         return points;
+    }
+
+    /** Indica si el índice de cabeceras contiene todas las columnas indicadas (para posición opcional). */
+    private boolean hasAll(Map<String, Integer> idx, List<String> cols) {
+        return cols.stream().allMatch(idx::containsKey);
     }
 
     /** Construye un mapa cabecera→posición para acceso a columnas por nombre, tolerando reordenamiento. */
@@ -106,15 +126,35 @@ public class AssettoCorsaCsvParser implements CsvParser {
             return 0.0;
         }
     }
-    /** Construye un TelemetryPoint a partir de una fila del CSV usando el índice de cabeceras y el número de fila como distancia. */
-    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum) {
+    /** Construye un TelemetryPoint a partir de una fila del CSV usando el índice de cabeceras y el número de fila como distancia.
+     *  Si hasPos es true, además puebla la posición local (posX→x, posZ→y) marcándola como no geográfica.
+     *  lapNumber indica el número de vuelta 1-based detectado por el parser (Bloque C). */
+    private TelemetryPoint buildTelemetryPoint(String[] row, Map<String, Integer> headerIndex, int rowNum, boolean hasPos, int lapNumber) {
         TelemetryPoint p = new TelemetryPoint();
         p.setDistance((double) rowNum);
+        p.setLapNumber(lapNumber);
         p.setSpeed(parseDouble(row, headerIndex, "speedKmh"));
         p.setBrake(parseDouble(row, headerIndex, "brake"));
         p.setThrottle(parseDouble(row, headerIndex, "gas"));
+        if (hasPos) {
+            p.setPosX(parseDouble(row, headerIndex, "posX"));  // X = coordenada local x
+            p.setPosY(parseDouble(row, headerIndex, "posZ"));  // Y = coordenada local z
+            p.setGeographic(false);
+        }
         return p;
     }
+    /** Lee el valor entero de la columna "pos" para detectar reseteos de vuelta. */
+    private int parseIntPos(String[] row, Map<String, Integer> idx) {
+        if (!idx.containsKey("pos")) return 0;
+        int i = idx.get("pos");
+        if (i >= row.length || row[i].isBlank()) return 0;
+        try {
+            return (int) Double.parseDouble(row[i].trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     /** Abre un CSVReader (OpenCSV) sobre el stream del MultipartFile asumiendo codificación UTF-8. */
     private CSVReader openCsvReader(MultipartFile file) throws Exception {
         return new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));

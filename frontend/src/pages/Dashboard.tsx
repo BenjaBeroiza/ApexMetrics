@@ -124,9 +124,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
-          <p>Historial de sesiones de telemetría personal.</p>
+        <div className="page-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1 style={{ textTransform: 'uppercase' }}>MIS SESIONES</h1>
+            <p>Historial de sesiones de telemetría personal.</p>
+          </div>
+          {sesiones.length >= 2 && (
+            <button
+              onClick={() => navigate('/comparacion')}
+              className="neon-button"
+              style={{ width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.75rem' }}
+            >
+              COMPARAR VUELTAS
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -157,7 +168,25 @@ export default function Dashboard() {
                   <td style={{ color: 'var(--neon-cyan)' }}>{formatLapTime(sesion.bestLapTime)}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{new Date(sesion.uploadedAt).toLocaleDateString()}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button 
+                    <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/analisis`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      VER ANÁLISIS
+                    </button>
+                    <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/trazado`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      VER TRAZADO
+                    </button>
+                    <button
+                      onClick={() => navigate(`/dashboard/sesiones/${sesion.sessionId}/feedback-ia`)}
+                      style={{ background: 'none', border: 'none', color: 'var(--neon-cyan)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '1rem' }}
+                    >
+                      ANÁLISIS IA
+                    </button>
+                    <button
                       onClick={() => handleEliminarSesion(sesion.sessionId)}
                       style={{ background: 'none', border: 'none', color: 'var(--error-red)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
                     >

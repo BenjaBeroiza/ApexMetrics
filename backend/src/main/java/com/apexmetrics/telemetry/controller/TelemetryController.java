@@ -1,6 +1,10 @@
 package com.apexmetrics.telemetry.controller;
 
+import com.apexmetrics.telemetry.dto.AIFeedbackDTO;
+import com.apexmetrics.telemetry.dto.ComparacionDTO;
 import com.apexmetrics.telemetry.dto.SessionSummaryDTO;
+import com.apexmetrics.telemetry.dto.TelemetryPointDTO;
+import com.apexmetrics.telemetry.dto.TrackPathDTO;
 import com.apexmetrics.telemetry.service.ITelemetryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -70,6 +74,70 @@ public class TelemetryController {
     }
 
     /**
+     * Devuelve los puntos de telemetría de una sesión propia para alimentar el
+     * dashboard analítico del frontend (curvas de velocidad y frenado sincronizadas
+     * por distancia recorrida). El servicio valida que la sesión pertenezca al usuario
+     * autenticado, devolviendo 403 si se intenta acceder a una sesión ajena.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa RF05 — Dashboard analítico.
+     *
+     * @param id identificador de la sesión cuyos puntos se solicitan
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con la lista de TelemetryPointDTO de la sesión (puede estar vacía)
+     */
+    @GetMapping("/sesiones/{id}/puntos")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<List<TelemetryPointDTO>> obtenerPuntos(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerPuntos(id, userEmail));
+    }
+
+    /**
+     * Devuelve los puntos de dos sesiones propias para compararlas en el frontend
+     * (superposición de curvas de velocidad y frenado). El servicio valida que ambas
+     * sesiones pertenezcan al usuario autenticado, devolviendo 403 si alguna es ajena.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa RF06 — Comparación de vueltas.
+     *
+     * @param sessionA identificador de la primera sesión a comparar
+     * @param sessionB identificador de la segunda sesión a comparar
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con ComparacionDTO (puntos de la sesión A y de la sesión B)
+     */
+    @GetMapping("/comparacion")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<ComparacionDTO> compararSesiones(
+            @RequestParam("sessionA") Long sessionA,
+            @RequestParam("sessionB") Long sessionB,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.compararSesiones(sessionA, sessionB, userEmail));
+    }
+
+    /**
+     * Devuelve la traza (recorrido 2D) de una sesión propia para dibujarla sobre el mapa
+     * del frontend con Leaflet. El servicio valida que la sesión pertenezca al usuario
+     * autenticado, devolviendo 403 si se intenta acceder a una sesión ajena. El flag
+     * geographic indica si los puntos son coordenadas GPS (tiles OSM) o plano local
+     * (CRS.Simple). Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * Implementa el trazado de pistas (Bloque B — OpenStreetMap / Leaflet).
+     *
+     * @param id identificador de la sesión cuya traza se solicita
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con TrackPathDTO (flag geographic + puntos con posición, puede estar vacío)
+     */
+    @GetMapping("/sesiones/{id}/trazado")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<TrackPathDTO> obtenerTrazado(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerTrazado(id, userEmail));
+    }
+
+    /**
      * Elimina una sesión de telemetría propia del usuario autenticado.
      * El servicio valida que la sesión pertenezca a quien la solicita para evitar
      * que un usuario borre datos de otro (control de autorización a nivel de recurso).
@@ -88,5 +156,23 @@ public class TelemetryController {
             @AuthenticationPrincipal String userEmail) {
         telemetryService.eliminarSesion(id, userEmail);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Genera retroalimentación de coaching mediante IA (Gemini 2.5 Flash) a partir
+     * de los datos de telemetría de una sesión propia. Valida la propiedad de la
+     * sesión, resume las métricas clave y delega la generación al GeminiService.
+     * Acceso restringido a roles PILOT y ENGINEER.
+     *
+     * @param id identificador de la sesión a analizar
+     * @param userEmail email del usuario autenticado inyectado desde el SecurityContext
+     * @return 200 OK con AIFeedbackDTO (sessionId + texto de retroalimentación)
+     */
+    @GetMapping("/sesiones/{id}/feedback-ia")
+    @PreAuthorize("hasAnyRole('PILOT', 'ENGINEER')")
+    public ResponseEntity<AIFeedbackDTO> obtenerFeedbackIA(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userEmail) {
+        return ResponseEntity.ok(telemetryService.obtenerFeedbackIA(id, userEmail));
     }
 }

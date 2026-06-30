@@ -110,6 +110,37 @@ body {
   box-shadow: 0 0 12px var(--neon-cyan-dim);
 }
 
+.input-wrapper select,
+.neon-select {
+  width: 100%;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  padding: 0.7rem 2.5rem 0.7rem 1rem;
+  font-family: monospace;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ffff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+}
+
+.input-wrapper select:focus,
+.neon-select:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px var(--neon-cyan-dim);
+}
+
+.input-wrapper select option,
+.neon-select option {
+  background-color: #0d0d0d;
+  color: var(--text-main);
+}
+
 /* Estados de Éxito y Error */
 .input-wrapper.success input {
   border-color: var(--neon-cyan);
