@@ -565,6 +565,35 @@
   font-size: 0.7rem;
 }
 
+/* --- SELECTOR NEON (country dropdown, comparte estética con los inputs) --- */
+.neon-select {
+  width: 100%;
+  background-color: var(--bg-dark, #0d0d0d);
+  border: 1px solid var(--border-color, #333);
+  color: var(--text-main, #e0e0e0);
+  font-size: 0.9rem;
+  padding: 0.7rem 2.5rem 0.7rem 1rem;
+  font-family: monospace;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ffff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+}
+
+.neon-select:focus {
+  border-color: var(--neon-cyan, #00ffff);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+}
+
+.neon-select option {
+  background-color: #0d0d0d;
+  color: var(--text-main, #e0e0e0);
+}
+
 /* Responsive: ocultar leyenda en pantallas muy pequeñas */
 @media (max-width: 480px) {
   .track-legend {
@@ -577,4 +606,4 @@
   .trackmap-controls {
     gap: 0.75rem;
   }
-}
+}

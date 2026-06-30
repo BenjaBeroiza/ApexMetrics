@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Register from './Register';
 
-// Helper: renderiza Register envuelto en MemoryRouter
 const renderRegister = () =>
   render(
     <MemoryRouter>
@@ -11,7 +10,6 @@ const renderRegister = () =>
     </MemoryRouter>
   );
 
-// Helper: completa el formulario con valores válidos
 const fillValidForm = () => {
   fireEvent.change(screen.getByPlaceholderText('Ej. Piloto 1'), {
     target: { name: 'username', value: 'PilotoTest' },
@@ -19,7 +17,7 @@ const fillValidForm = () => {
   fireEvent.change(screen.getByPlaceholderText('nuevo@apex.sim'), {
     target: { name: 'email', value: 'test@apex.sim' },
   });
-  fireEvent.change(screen.getByPlaceholderText('Ej. Chile'), {
+  fireEvent.change(screen.getByRole('combobox'), {
     target: { name: 'country', value: 'Chile' },
   });
 };
@@ -40,14 +38,15 @@ describe('Register — renderizado', () => {
     expect(screen.getByPlaceholderText('nuevo@apex.sim')).toBeInTheDocument();
   });
 
-  it('muestra el campo de país', () => {
+  it('muestra el selector de país', () => {
     renderRegister();
-    expect(screen.getByPlaceholderText('Ej. Chile')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByText('Selecciona tu país')).toBeInTheDocument();
   });
 
   it('muestra el campo de contraseña', () => {
     renderRegister();
-    expect(screen.getByPlaceholderText('Mínimo 16 caracteres')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Mínimo 8 caracteres')).toBeInTheDocument();
   });
 
   it('muestra el campo de confirmación de contraseña', () => {
@@ -71,11 +70,11 @@ describe('Register — validaciones de formulario', () => {
     vi.clearAllMocks();
   });
 
-  it('muestra error si la contraseña tiene menos de 16 caracteres', async () => {
+  it('muestra error si la contraseña tiene menos de 8 caracteres', async () => {
     renderRegister();
     fillValidForm();
 
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'corta' },
     });
     fireEvent.change(screen.getByPlaceholderText('Repetir clave'), {
@@ -84,7 +83,7 @@ describe('Register — validaciones de formulario', () => {
     fireEvent.click(screen.getByRole('button', { name: /SOLICITAR ACCESO/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Mínimo 16 caracteres/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mínimo 8 caracteres/i)).toBeInTheDocument();
     });
   });
 
@@ -92,7 +91,7 @@ describe('Register — validaciones de formulario', () => {
     renderRegister();
     fillValidForm();
 
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_segura_larga_16_chars' },
     });
     fireEvent.change(screen.getByPlaceholderText('Repetir clave'), {
@@ -121,7 +120,7 @@ describe('Register — integración con API', () => {
     renderRegister();
     fillValidForm();
 
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_super_segura_32chars' },
     });
     fireEvent.change(screen.getByPlaceholderText('Repetir clave'), {
@@ -129,7 +128,6 @@ describe('Register — integración con API', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /SOLICITAR ACCESO/i }));
 
-    // Verificar que el fetch se llamó con los datos correctos
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/v1/auth/register',
@@ -147,7 +145,7 @@ describe('Register — integración con API', () => {
     renderRegister();
     fillValidForm();
 
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_super_segura_32chars' },
     });
     fireEvent.change(screen.getByPlaceholderText('Repetir clave'), {
@@ -166,7 +164,7 @@ describe('Register — integración con API', () => {
     renderRegister();
     fillValidForm();
 
-    fireEvent.change(screen.getByPlaceholderText('Mínimo 16 caracteres'), {
+    fireEvent.change(screen.getByPlaceholderText('Mínimo 8 caracteres'), {
       target: { name: 'password', value: 'clave_super_segura_32chars' },
     });
     fireEvent.change(screen.getByPlaceholderText('Repetir clave'), {

@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut, Search, Bell, Settings } from 'lucide-react';
 import '../styles/dashboard.css';
 
+const COUNTRIES = [
+  { group: '── SUDAMÉRICA ──', options: ['Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Ecuador', 'Paraguay', 'Perú', 'Uruguay', 'Venezuela'] },
+  { group: '── EUROPA ──', options: ['Alemania', 'Bélgica', 'Dinamarca', 'España', 'Finlandia', 'Francia', 'Grecia', 'Hungría', 'Italia', 'Países Bajos', 'Polonia', 'Portugal', 'Reino Unido', 'República Checa', 'Rumania', 'Suecia', 'Suiza'] },
+  { group: '── OTROS ──', options: ['Otro'] },
+];
+
 interface ProfileData {
   username: string;
   email: string;
@@ -211,14 +217,20 @@ export default function Profile() {
                 <Globe size={12} />
                 PAÍS DE ORIGEN
               </label>
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  value={profile.country}
-                  readOnly
-                  style={{ opacity: 0.7, cursor: 'not-allowed' }}
-                />
-              </div>
+              <select
+                className="neon-select"
+                value={profile.country}
+                onChange={(e) => setProfile({ ...profile, country: e.target.value })}
+              >
+                <option value="" disabled>Selecciona tu país</option>
+                {COUNTRIES.map(({ group, options }) => (
+                  <optgroup key={group} label={group}>
+                    {options.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
 
             {/* Estado del guardado */}
