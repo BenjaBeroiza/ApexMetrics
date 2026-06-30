@@ -47,7 +47,7 @@ export default function Profile() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: ProfileData) => setProfile(data))
+      .then((data: ProfileData) => setProfile({ ...data, country: data.country ?? '' }))
       .catch(() => { /* se conserva el perfil cacheado de localStorage */ });
   }, [token]);
 
@@ -61,6 +61,11 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
+    if (!profile.country) {
+      setSaveStatus('error');
+      setSaveError('Por favor selecciona un país antes de guardar');
+      return;
+    }
     setSaveStatus('saving');
     setSaveError(null);
     try {
@@ -243,7 +248,7 @@ export default function Profile() {
               </label>
               <select
                 className="neon-select"
-                value={profile.country}
+                value={profile.country || ''}
                 onChange={(e) => setProfile({ ...profile, country: e.target.value })}
               >
                 <option value="" disabled>Selecciona tu país</option>

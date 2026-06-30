@@ -387,13 +387,16 @@ export default function TrackMap({ sessionId }: TrackMapProps) {
   const minSpeed = Math.min(...speeds);
   const maxSpeed = Math.max(...speeds);
 
-  // FIX 1 — Pasar siempre un CRS concreto a MapContainer.
-  // Si se pasa undefined, Leaflet lo interpreta como CRS=undefined y rompe
-  // la proyección internamente (latLngToPoint falla). Usamos EPSG3857 para
-  // mapas geográficos (tiles OSM) y Simple para el plano local (Assetto Corsa).
   const mapCrs = L && L.CRS
     ? (path.geographic ? L.CRS.EPSG3857 : L.CRS.Simple)
     : L.CRS.EPSG3857;
+
+  // Para CRS.Simple (Assetto Corsa pos), pasamos bounds directamente al MapContainer
+  // para que Leaflet inicialice la vista correctamente desde el primer render.
+  // Usar center+zoom con CRS.Simple provoca que el viewport inicial no cubra el trazado.
+  const simpleBounds = !path.geographic
+    ? (L.latLngBounds(positions as L.LatLngExpression[]) as unknown as L.LatLngBoundsExpression)
+    : undefined;
 
   return (
     <div className="trackmap-wrapper">
@@ -443,8 +446,10 @@ export default function TrackMap({ sessionId }: TrackMapProps) {
         <MapContainer
           style={{ width: '100%', height: '100%' }}
           crs={mapCrs}
-          center={positions[0]}
-          zoom={path.geographic ? 15 : 0}
+          {...(path.geographic
+            ? { center: positions[0] as L.LatLngExpression, zoom: 15 }
+            : { bounds: simpleBounds, boundsOptions: { padding: [20, 20] } }
+          )}
           scrollWheelZoom
         >
           <MapContent
