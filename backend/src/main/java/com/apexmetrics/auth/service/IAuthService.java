@@ -3,6 +3,7 @@ package com.apexmetrics.auth.service;
 import com.apexmetrics.auth.dto.AuthResponseDTO;
 import com.apexmetrics.auth.dto.LoginRequestDTO;
 import com.apexmetrics.auth.dto.RegisterRequestDTO;
+import com.apexmetrics.auth.dto.UpdateProfileDTO;
 import com.apexmetrics.auth.dto.UserProfileDTO;
 
 public interface IAuthService {
@@ -41,4 +42,16 @@ public interface IAuthService {
      * @return UserProfileDTO con username, email, country y role
      */
     UserProfileDTO getProfile(String email);
+
+    /**
+     * Actualiza los datos editables del perfil del usuario autenticado.
+     * Solo se permite cambiar el país; username y email son inmutables.
+     *
+     * Implementa RF03 — Perfil de usuario (edición).
+     *
+     * @param email correo del usuario autenticado (principal del SecurityContext)
+     * @param dto   datos a actualizar (country)
+     * @return UserProfileDTO con los datos actualizados
+     */
+    UserProfileDTO updateProfile(String email, UpdateProfileDTO dto);
 }
