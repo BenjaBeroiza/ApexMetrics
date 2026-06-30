@@ -44,6 +44,7 @@ class TelemetryServiceTest {
     @Mock private CategoryRepository categoryRepository;
     @Mock private UserRepository userRepository;
     @Mock private CsvParser mockParser;
+    @Mock private GeminiService geminiService;
 
     private TelemetryService telemetryService;
 
@@ -57,7 +58,8 @@ class TelemetryServiceTest {
         telemetryService = new TelemetryService(
                 List.of(mockParser),
                 sessionRepository, pointRepository,
-                trackRepository, categoryRepository, userRepository
+                trackRepository, categoryRepository, userRepository,
+                geminiService
         );
 
         track = Track.builder().id(1L).name("Monza").country("Italia").build();

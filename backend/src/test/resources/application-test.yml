@@ -20,3 +20,5 @@ app:
   jwt:
     secret: test-secret-key-for-unit-tests-min32chars-padding
     expiration-ms: 3600000
+  gemini:
+    api-key: test-gemini-key
