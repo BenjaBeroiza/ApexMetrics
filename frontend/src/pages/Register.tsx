@@ -21,8 +21,8 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (formData.password.length < 16) {
-      setError('Error: Mínimo 16 caracteres requeridos para la clave');
+    if (formData.password.length < 8) {
+      setError('Error: Mínimo 8 caracteres requeridos para la clave');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -115,7 +115,7 @@ export default function Register() {
               <input
                 type="password"
                 name="password"
-                placeholder="Mínimo 16 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={formData.password}
                 onChange={handleChange}
                 required

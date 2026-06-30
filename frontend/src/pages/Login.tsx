@@ -9,15 +9,15 @@ export default function Login() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (e.target.name === 'password' && e.target.value.length >= 16) {
+    if (e.target.name === 'password' && e.target.value.length >= 8) {
       setError(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (formData.password.length < 16) {
-      setError('Error: Mínimo 16 caracteres requeridos');
+    if (formData.password.length < 8) {
+      setError('Error: Mínimo 8 caracteres requeridos');
       return;
     }
     
@@ -78,7 +78,7 @@ export default function Login() {
               <input 
                 type="password" 
                 name="password"
-                placeholder="Mínimo 16 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={formData.password}
                 onChange={handleChange}
                 required 
