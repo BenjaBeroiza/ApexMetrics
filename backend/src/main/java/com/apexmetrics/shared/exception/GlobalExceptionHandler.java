@@ -82,6 +82,20 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Traduce InvalidResetTokenException a una respuesta 400 con cuerpo estandarizado.
+     * Se lanza en el canje de restablecimiento de contraseña (UC03) cuando el token no
+     * existe, ya fue usado o expiró. El mensaje es genérico para no revelar el motivo exacto.
+     *
+     * @param ex excepción de token de reseteo inválido
+     * @return 400 BAD REQUEST con cuerpo de error uniforme
+     */
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidResetToken(InvalidResetTokenException ex) {
+        log.error("InvalidResetTokenException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(ex.getMessage(), 400));
+    }
+
+    /**
      * Traduce MaxUploadSizeExceededException a una respuesta 413 con mensaje localizado.
      * Spring la lanza cuando el archivo enviado al endpoint de carga (RF04) supera el
      * tamaño máximo configurado (10 MB).

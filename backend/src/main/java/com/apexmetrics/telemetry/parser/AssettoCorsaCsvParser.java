@@ -1,5 +1,6 @@
 package com.apexmetrics.telemetry.parser;
 
+import com.apexmetrics.shared.csv.CsvHeaderSupport;
 import com.apexmetrics.shared.exception.CsvInvalidSchemaException;
 import com.apexmetrics.telemetry.entity.TelemetryPoint;
 import com.opencsv.CSVReader;
@@ -11,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,8 +51,6 @@ public class AssettoCorsaCsvParser implements CsvParser {
     @Override
     public List<TelemetryPoint> parse(MultipartFile file) {
         List<TelemetryPoint> points = new ArrayList<>();
-        // DESPUÉS — el try queda así
-        // DESPUÉS — el try queda así
         try (CSVReader reader = openCsvReader(file)) {
 
             String[] headers = reader.readNext();
@@ -60,12 +58,12 @@ public class AssettoCorsaCsvParser implements CsvParser {
                 throw new CsvInvalidSchemaException("El archivo CSV está vacío", "ALL");
             }
 
-            Map<String, Integer> headerIndex = buildHeaderIndex(headers);
-            validateHeaders(headerIndex);
+            Map<String, Integer> headerIndex = CsvHeaderSupport.buildHeaderIndex(headers);
+            CsvHeaderSupport.validateRequiredHeaders(headerIndex, REQUIRED_HEADERS);
 
             // Posición local opcional: solo si el CSV trae las columnas posX y posZ.
             // Assetto Corsa exporta coordenadas de mundo local → plano CRS.Simple (sin tiles).
-            boolean hasPos = hasAll(headerIndex, List.of("posX", "posZ"));
+            boolean hasPos = CsvHeaderSupport.hasAll(headerIndex, List.of("posX", "posZ"));
 
             // Detección de vuelta: se incrementa el contador cuando el valor de la
             // columna "pos" disminuye respecto al punto anterior, lo que indica
@@ -90,29 +88,6 @@ public class AssettoCorsaCsvParser implements CsvParser {
             throw new CsvInvalidSchemaException("Error al procesar el CSV de Assetto Corsa: " + e.getMessage(), "UNKNOWN");
         }
         return points;
-    }
-
-    /** Indica si el índice de cabeceras contiene todas las columnas indicadas (para posición opcional). */
-    private boolean hasAll(Map<String, Integer> idx, List<String> cols) {
-        return cols.stream().allMatch(idx::containsKey);
-    }
-
-    /** Construye un mapa cabecera→posición para acceso a columnas por nombre, tolerando reordenamiento. */
-    private Map<String, Integer> buildHeaderIndex(String[] headers) {
-        Map<String, Integer> map = new HashMap<>();
-        for (int i = 0; i < headers.length; i++) {
-            map.put(headers[i].trim(), i);
-        }
-        return map;
-    }
-
-    /** Verifica que el CSV contenga todas las cabeceras obligatorias; lanza CsvInvalidSchemaException si falta alguna. */
-    private void validateHeaders(Map<String, Integer> headerIndex) {
-        for (String required : REQUIRED_HEADERS) {
-            if (!headerIndex.containsKey(required)) {
-                throw new CsvInvalidSchemaException("Columna requerida no encontrada: " + required, required);
-            }
-        }
     }
 
     /** Lee una celda numérica de la fila por nombre de columna; retorna 0.0 si está ausente, vacía o no es parseable. */

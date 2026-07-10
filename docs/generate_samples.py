@@ -331,6 +331,77 @@ MONZA_WAYPOINTS = [
 
 
 # ---------------------------------------------------------------------------
+# 5b. demo_iracing_monza_real.csv  —  Export "real" de iRacing (alta fidelidad)
+#     Replica un export de simulador con más fidelidad que los demos base:
+#       - Columnas extra que trae un export real (Gear, RPM) que el parser debe
+#         IGNORAR sin romperse (solo requiere Distance/Speed/Brake/Throttle).
+#       - Orden de columnas NO canónico (Distance no va primero) para ejercitar
+#         el índice por nombre de cabecera.
+#       - Muestreo más denso (~360 puntos/vuelta) similar a 60 Hz reales.
+#     Sirve como fixture de test (backend/src/test/resources) y demo de "CSV real".
+#     NOTA: Speed se mantiene en km/h para respetar el contrato de la app (los
+#     exports crudos de iRacing traen Speed en m/s; la normalización de unidades
+#     queda documentada como consideración conocida en docs/BUG_CSV_TRAZADOS.md).
+# ---------------------------------------------------------------------------
+
+def _gear_for_speed(v):
+    """Marcha aproximada en función de la velocidad (km/h), rango 1..7."""
+    thresholds = [80, 120, 160, 200, 240, 280]
+    gear = 1
+    for th in thresholds:
+        if v > th:
+            gear += 1
+    return gear
+
+
+def _rpm_for_speed(v, gear):
+    """RPM plausible: sube con la velocidad dentro de la marcha, con leve variación."""
+    base = 4000 + (v % 60) / 60.0 * 4500
+    # marchas cortas giran más alto a igual velocidad
+    return int(smooth_clamp(base + (7 - gear) * 250, 3200, 8600))
+
+
+def gen_iracing_real_export(waypoints, n_per_lap=360, n_laps=2):
+    track = interpolate_gps_track(waypoints, n_per_lap)
+
+    window = 4
+    speeds = []
+    raw = [p[2] for p in track]
+    for i in range(n_per_lap):
+        s = sum(raw[(i + k) % n_per_lap] for k in range(-window, window + 1))
+        speeds.append(s / (2 * window + 1))
+
+    brakes, throttles = derive_brake_throttle(speeds)
+
+    R = 6371000
+    # Orden de columnas deliberadamente NO canónico: Distance no va primero.
+    rows = ["Lat,Lon,Speed,Throttle,Brake,Gear,RPM,Distance"]
+    for _lap in range(n_laps):
+        prev_lat, prev_lon = track[0][0], track[0][1]
+        dist_lap = 0.0
+        for i in range(n_per_lap):
+            lat, lon, _ = track[i]
+            dlat = math.radians(lat - prev_lat)
+            dlon = math.radians(lon - prev_lon)
+            a = (math.sin(dlat/2)**2
+                 + math.cos(math.radians(prev_lat))
+                 * math.cos(math.radians(lat))
+                 * math.sin(dlon/2)**2)
+            dist_lap += R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            prev_lat, prev_lon = lat, lon
+            v = speeds[i]
+            gear = _gear_for_speed(v)
+            rpm = _rpm_for_speed(v, gear)
+            rows.append(
+                f"{lat:.6f},{lon:.6f},{v:.1f},{throttles[i]:.3f},{brakes[i]:.3f},"
+                f"{gear},{rpm},{dist_lap:.1f}"
+            )
+        dist_lap = 0.0  # iRacing resetea distancia en cada vuelta
+
+    return "\n".join(rows)
+
+
+# ---------------------------------------------------------------------------
 # 5. demo_assetto_corsa_pos.csv  —  AC con posición local, circuito de kart
 #    Formato: pos,speedKmh,brake,gas,posX,posZ — plano CRS.Simple
 # ---------------------------------------------------------------------------
@@ -423,6 +494,7 @@ if __name__ == "__main__":
         "demo_assetto_corsa.csv":     gen_ac_no_gps(),
         "demo_iracing_spa.csv":       gen_iracing_gps_circuit(SPA_WAYPOINTS, 200, 2),
         "demo_iracing_monza.csv":     gen_iracing_gps_circuit(MONZA_WAYPOINTS, 200, 2),
+        "demo_iracing_monza_real.csv": gen_iracing_real_export(MONZA_WAYPOINTS, 360, 2),
         "demo_assetto_corsa_pos.csv": gen_ac_gps(),
     }
 
