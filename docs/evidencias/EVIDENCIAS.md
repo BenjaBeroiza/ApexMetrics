@@ -12,13 +12,14 @@ desde las observaciones del Hito 5.
 **Proyecto:** `apexmetrics-backend`  
 **Análisis ejecutado con:** `mvn clean verify sonar:sonar`
 
-| Métrica | Valor |
-|---------|-------|
-| Bugs | 0 |
-| Vulnerabilidades | 0 |
-| Code Smells | ≤ 5 (pendiente captura) |
-| Cobertura de código | ≥ 85% en capa Service |
-| Duplicaciones | < 3% |
+| Métrica | Valor | Calificación |
+|---------|-------|--------------|
+| Bugs (Reliability issues) | 2 | B |
+| Vulnerabilidades (Security issues) | 0 | A |
+| Security Hotspots | 1 | E (requiere revisión) |
+| Code Smells (Maintainability) | 27 | A |
+| Cobertura de código | 88.9% | Aceptada |
+| Duplicaciones | 0.8% | Excelente |
 
 > **[PEGAR CAPTURA]** — Captura del dashboard de SonarQube mostrando el
 > estado del proyecto `apexmetrics-backend` con calificación de Quality Gate.
@@ -34,14 +35,17 @@ desde las observaciones del Hito 5.
 **Proyecto:** `apexmetrics-frontend`  
 **Análisis ejecutado con:** `sonar-scanner` (tras `npm run test:cov`)
 
-| Métrica | Valor |
-|---------|-------|
-| Bugs | 0 |
-| Vulnerabilidades | 0 |
-| Code Smells | ≤ 10 (pendiente captura) |
-| Cobertura de código | Informada por LCOV desde Vitest |
-| Duplicaciones | < 3% |
+| Métrica | Valor | Calificación |
+|---------|-------|--------------|
+| Bugs (Reliability issues) | 15 | A |
+| Vulnerabilidades (Security issues) | 0 | A |
+| Security Hotspots | 0 | A |
+| Code Smells (Maintainability) | 6 | A |
+| Cobertura de código | 0.0% * | Requiere ajuste de ruta del reporte lcov |
+| Duplicaciones | 5.6% | Aceptable |
 
+> \* *Nota: La cobertura del frontend se ejecuta correctamente con Vitest, pero la carga a SonarQube requiere afinar la ruta relativa del archivo lcov.info según el directorio de trabajo del escáner.*
+>
 > **[PEGAR CAPTURA]** — Captura del dashboard de SonarQube mostrando el
 > estado del proyecto `apexmetrics-frontend` con calificación de Quality Gate.
 >
