@@ -18,7 +18,8 @@ services:
       - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-3600000}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
@@ -30,6 +31,11 @@ services:
       - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apexuser} -d ${POSTGRES_DB:-apexmetrics_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:
