@@ -32,8 +32,8 @@ fi
 
 $MVN clean verify -q
 echo ""
-echo "  ✔  Backend: BUILD SUCCESS"
-echo "  📊 Cobertura JaCoCo: backend/target/site/jacoco/index.html"
+echo "  [OK] Backend: BUILD SUCCESS"
+echo "   Cobertura JaCoCo: backend/target/site/jacoco/index.html"
 echo ""
 
 # ── FRONTEND ──────────────────────────────────────────────────
@@ -44,19 +44,19 @@ cd "$ROOT_DIR/frontend"
 
 # Instalar dependencias si node_modules no existe
 if [ ! -d "node_modules" ]; then
-  echo "  → Instalando dependencias npm..."
+  echo "  Instalando dependencias npm..."
   npm install --silent
 fi
 
 npm run test:cov
 echo ""
-echo "  ✔  Frontend: todos los tests pasaron"
-echo "  📊 Cobertura V8: frontend/coverage/index.html"
+echo "  [OK] Frontend: todos los tests pasaron"
+echo "   Cobertura V8: frontend/coverage/index.html"
 echo ""
 
 # ── RESUMEN ───────────────────────────────────────────────────
 echo "=============================================="
-echo " ✅  Suite completa finalizada sin errores"
+echo "  Suite completa finalizada sin errores"
 echo "=============================================="
 echo ""
 echo " Reportes de cobertura:"
