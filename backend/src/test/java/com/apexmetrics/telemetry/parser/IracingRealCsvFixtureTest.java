@@ -59,9 +59,10 @@ class IracingRealCsvFixtureTest {
             assertThat(p.getPosY()).isNotNull();   // Y = Lat
         });
 
-        // Coordenadas dentro del recuadro de Monza (sanity de alineación GPS).
+        // Coordenadas dentro del recuadro real de Monza (sanity de alineación GPS).
+        // Límites del trazado GP según la geometría OSM (rel 284565): ver track_geometry.py.
         assertThat(points).allSatisfy(p -> {
-            assertThat(p.getPosY()).isBetween(45.60, 45.63);   // Lat
+            assertThat(p.getPosY()).isBetween(45.60, 45.64);   // Lat
             assertThat(p.getPosX()).isBetween(9.27, 9.30);     // Lon
         });
 
