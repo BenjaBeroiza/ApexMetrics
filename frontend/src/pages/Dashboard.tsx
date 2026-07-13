@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Settings, User, LayoutDashboard, Trophy, Upload } from 'lucide-react';
+import { getSesiones, eliminarSesion, type SesionResumen } from '../services/telemetry.service';
+import { ApiError } from '../services/http';
 import '../styles/dashboard.css';
 
-interface Sesion {
-  sessionId: number;
-  trackName: string;
-  categoryName: string;
-  bestLapTime: number;
-  uploadedAt: string;
-}
+type Sesion = SesionResumen;
 
 export default function Dashboard() {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
@@ -24,17 +20,13 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/v1/telemetry/sesiones', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.status === 401) {
+      const data = await getSesiones(token);
+      setSesiones(data);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
         navigate('/login');
         return;
       }
-      if (!response.ok) throw new Error('Error al cargar las sesiones');
-      const data = await response.json();
-      setSesiones(data);
-    } catch (_err) {
       setError('No se pudo conectar con el servidor.');
     } finally {
       setLoading(false);
@@ -54,17 +46,14 @@ export default function Dashboard() {
   const handleEliminarSesion = async (id: number) => {
     if (!window.confirm('¿Seguro que deseas eliminar esta sesión?')) return;
     try {
-      const response = await fetch(`/api/v1/telemetry/sesiones/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setSesiones(sesiones.filter(s => s.sessionId !== id));
-      } else {
+      await eliminarSesion(token, id);
+      setSesiones(sesiones.filter(s => s.sessionId !== id));
+    } catch (err) {
+      if (err instanceof ApiError) {
         alert('Error al eliminar la sesión');
+      } else {
+        alert('Error de conexión');
       }
-    } catch (_err) {
-      alert('Error de conexión');
     }
   };
 

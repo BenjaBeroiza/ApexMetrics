@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Brain, AlertCircle } from 'lucide-react';
+import { getFeedbackIA, type FeedbackResponse } from '../services/telemetry.service';
 import '../styles/dashboard.css';
-
-interface FeedbackResponse {
-  sessionId: number;
-  feedback: string;
-}
 
 const SECTIONS = [
   'ANÁLISIS DE FRENADA',
@@ -50,13 +46,7 @@ export default function FeedbackIA() {
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
 
-    fetch(`/api/v1/telemetry/sesiones/${id}/feedback-ia`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(res.status === 403 ? 'Sin permiso' : 'Error del servidor');
-        return res.json() as Promise<FeedbackResponse>;
-      })
+    getFeedbackIA(token, id ?? '')
       .then((data) => setFeedback(data))
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));

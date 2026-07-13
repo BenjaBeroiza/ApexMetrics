@@ -9,13 +9,8 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-
-interface PuntoTelemetria {
-  distance: number;
-  speed: number;
-  brake: number;
-  throttle: number;
-}
+import { getPuntos, type PuntoTelemetria } from '../services/telemetry.service';
+import { ApiError } from '../services/http';
 
 interface SessionChartProps {
   /** Identificador de la sesión cuyas curvas se quieren graficar. */
@@ -44,18 +39,15 @@ export default function SessionChart({ sessionId }: SessionChartProps) {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/v1/telemetry/sesiones/${sessionId}/puntos`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.status === 403) {
-          if (activo) setError('No tienes permiso para ver esta sesión.');
-          return;
-        }
-        if (!response.ok) throw new Error('Error al cargar los puntos');
-        const data: PuntoTelemetria[] = await response.json();
+        const data = await getPuntos(token, sessionId);
         if (activo) setPuntos(data);
-      } catch (_err) {
-        if (activo) setError('No se pudo conectar con el servidor.');
+      } catch (err) {
+        if (!activo) return;
+        if (err instanceof ApiError && err.status === 403) {
+          setError('No tienes permiso para ver esta sesión.');
+        } else {
+          setError('No se pudo conectar con el servidor.');
+        }
       } finally {
         if (activo) setLoading(false);
       }

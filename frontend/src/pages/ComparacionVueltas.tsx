@@ -11,6 +11,8 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { getSesiones, getComparacion, type PuntoTelemetria } from '../services/telemetry.service';
+import { ApiError } from '../services/http';
 import '../styles/dashboard.css';
 
 interface Sesion {
@@ -19,12 +21,7 @@ interface Sesion {
   uploadedAt: string;
 }
 
-interface Punto {
-  distance: number;
-  speed: number;
-  brake: number;
-  throttle: number;
-}
+type Punto = PuntoTelemetria;
 
 interface FilaComparacion {
   distance: number;
@@ -51,11 +48,8 @@ export default function ComparacionVueltas() {
       navigate('/login');
       return;
     }
-    fetch('/api/v1/telemetry/sesiones', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: Sesion[]) => setSesiones(data))
+    getSesiones(token)
+      .then((data) => setSesiones(data))
       .catch(() => setError('No se pudo cargar el historial de sesiones.'));
   }, [token, navigate]);
 
@@ -67,21 +61,15 @@ export default function ComparacionVueltas() {
     let activo = true;
     setLoading(true);
     setError(null);
-    fetch(`/api/v1/telemetry/comparacion?sessionA=${sesionA}&sessionB=${sesionB}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
-        if (r.status === 403) return Promise.reject('forbidden');
-        if (!r.ok) return Promise.reject('error');
-        return r.json();
-      })
-      .then((resp: { sesionA: Punto[]; sesionB: Punto[] }) => {
+    getComparacion(token, sesionA, sesionB)
+      .then((resp) => {
         if (!activo) return;
         setDatos(combinarPuntos(resp.sesionA, resp.sesionB));
       })
-      .catch((e) => {
+      .catch((e: unknown) => {
         if (!activo) return;
-        setError(e === 'forbidden' ? 'No tienes permiso sobre alguna de las sesiones.' : 'No se pudo cargar la comparación.');
+        const forbidden = e instanceof ApiError && e.status === 403;
+        setError(forbidden ? 'No tienes permiso sobre alguna de las sesiones.' : 'No se pudo cargar la comparación.');
       })
       .finally(() => activo && setLoading(false));
     return () => { activo = false; };

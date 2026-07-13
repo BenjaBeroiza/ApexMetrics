@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Globe, Shield, LayoutDashboard, Trophy, Upload, LogOut, Search, Bell, Settings } from 'lucide-react';
+import { getProfile, updateProfile, type ProfileData } from '../services/user.service';
+import { ApiError } from '../services/http';
 import '../styles/dashboard.css';
 
 const COUNTRIES = [
@@ -8,13 +10,6 @@ const COUNTRIES = [
   { group: '── EUROPA ──', options: ['Alemania', 'Bélgica', 'Dinamarca', 'España', 'Finlandia', 'Francia', 'Grecia', 'Hungría', 'Italia', 'Países Bajos', 'Polonia', 'Portugal', 'Reino Unido', 'República Checa', 'Rumania', 'Suecia', 'Suiza'] },
   { group: '── OTROS ──', options: ['Otro'] },
 ];
-
-interface ProfileData {
-  username: string;
-  email: string;
-  country: string;
-  role?: string;
-}
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -43,11 +38,8 @@ export default function Profile() {
   // Carga el perfil real desde el backend (RF03). Si falla, mantiene el fallback de localStorage.
   useEffect(() => {
     if (!token) return;
-    fetch('/api/v1/users/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: ProfileData) => setProfile({ ...data, country: data.country ?? '' }))
+    getProfile(token)
+      .then((data) => setProfile({ ...data, country: data.country ?? '' }))
       .catch(() => { /* se conserva el perfil cacheado de localStorage */ });
   }, [token]);
 
@@ -69,27 +61,14 @@ export default function Profile() {
     setSaveStatus('saving');
     setSaveError(null);
     try {
-      const response = await fetch('/api/v1/users/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ country: profile.country }),
-      });
-      if (response.ok) {
-        const updated = await response.json();
-        setProfile(updated);
-        localStorage.setItem('apex_country', updated.country ?? '');
-        setSaveStatus('success');
-        setTimeout(() => setSaveStatus('idle'), 2500);
-      } else {
-        setSaveStatus('error');
-        setSaveError('Error al guardar los cambios');
-      }
-    } catch {
+      const updated = await updateProfile(token, { country: profile.country });
+      setProfile(updated);
+      localStorage.setItem('apex_country', updated.country ?? '');
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 2500);
+    } catch (err) {
       setSaveStatus('error');
-      setSaveError('Error de conexión');
+      setSaveError(err instanceof ApiError ? 'Error al guardar los cambios' : 'Error de conexión');
     }
   };
 
