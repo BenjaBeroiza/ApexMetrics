@@ -5,6 +5,7 @@ import com.apexmetrics.auth.entity.User;
 import com.apexmetrics.auth.repository.PasswordResetTokenRepository;
 import com.apexmetrics.auth.repository.UserRepository;
 import com.apexmetrics.shared.exception.InvalidResetTokenException;
+import com.apexmetrics.shared.mail.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +19,9 @@ import java.util.UUID;
 
 /**
  * Implementación del flujo de restablecimiento de contraseña (UC03).
- * Versión mínima viable sin servidor de correo: el enlace de reseteo se escribe en los logs
- * del backend (nivel INFO) para que en desarrollo se pueda copiar y continuar el flujo. En
- * producción bastaría con reemplazar el log por el envío de un email real.
+ * Si hay un servidor SMTP configurado (MAIL_HOST), el enlace de reseteo se envía por
+ * correo al usuario; sin SMTP (desarrollo/tests) se mantiene el fallback de escribirlo
+ * en los logs del backend (nivel INFO) para poder continuar el flujo manualmente.
  *
  * Decisiones de seguridad:
  *  - El token es un UUID opaco, de un solo uso y con expiración corta (30 min).
@@ -39,13 +40,18 @@ public class PasswordResetService implements IPasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    /**
-     * Ruta relativa del frontend donde se canjea el token; usada solo para construir el
-     * enlace que se registra en los logs en desarrollo (no hay servidor de correo).
-     */
+    /** Ruta relativa del frontend donde se canjea el token. */
     @Value("${app.reset.frontend-path:/reset-password}")
     private String resetFrontendPath;
+
+    /**
+     * URL pública del frontend (ej. http://174.138.34.228) usada para armar el enlace
+     * absoluto del correo. Vacía en desarrollo: el enlace queda relativo en el log.
+     */
+    @Value("${app.frontend.base-url:}")
+    private String frontendBaseUrl;
 
     @Override
     @Transactional
@@ -67,9 +73,28 @@ public class PasswordResetService implements IPasswordResetService {
                 .build();
         tokenRepository.save(resetToken);
 
-        // Simula el correo: en desarrollo el enlace queda visible en los logs del backend.
-        log.info("PasswordResetService.requestReset: enlace de reseteo (dev) → {}?token={} (expira en {} min)",
-                resetFrontendPath, token, TOKEN_TTL_MINUTES);
+        String resetLink = buildResetLink(token);
+        if (emailService.isEnabled()) {
+            try {
+                emailService.sendPasswordResetEmail(user.getEmail(), resetLink, TOKEN_TTL_MINUTES);
+            } catch (Exception ex) {
+                // Anti-enumeración: la respuesta HTTP sigue siendo 200 genérica aunque el
+                // SMTP falle; se deja rastro en el log para diagnóstico del operador.
+                log.error("PasswordResetService.requestReset: falló el envío del correo de reseteo", ex);
+            }
+        } else {
+            // Fallback sin SMTP (desarrollo/tests): el enlace queda visible en los logs.
+            log.info("PasswordResetService.requestReset: enlace de reseteo (dev) → {} (expira en {} min)",
+                    resetLink, TOKEN_TTL_MINUTES);
+        }
+    }
+
+    private String buildResetLink(String token) {
+        String base = frontendBaseUrl == null ? "" : frontendBaseUrl.trim();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        return base + resetFrontendPath + "?token=" + token;
     }
 
     @Override
