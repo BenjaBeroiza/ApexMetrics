@@ -18,7 +18,17 @@ trazado en el mapa, comparar vueltas y obtener retroalimentación mediante IA.
 
 ## URL de despliegue
 
-> **PENDIENTE** — se actualiza al desplegar en el VPS de producción.
+**Aplicación en producción:** <http://174.138.34.228/>
+
+| Servicio | URL |
+|----------|-----|
+| Frontend (SPA) | http://174.138.34.228/ |
+| API REST | http://174.138.34.228/api/v1/ (vía proxy nginx) |
+| Leaderboard público (sin login) | http://174.138.34.228/leaderboard |
+
+> Desplegado con Docker Compose en un VPS Ubuntu 24.04 (DigitalOcean).
+> El frontend (nginx) se publica en el puerto 80 y proxea `/api` al backend
+> Spring Boot; PostgreSQL no expone puertos públicos.
 
 ---
 
