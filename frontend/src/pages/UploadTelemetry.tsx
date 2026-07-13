@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CloudUpload, FileText, Search, Bell, Settings, User, LogOut, LayoutDashboard, Trophy, Upload } from 'lucide-react';
+import { uploadTelemetry } from '../services/telemetry.service';
 import '../styles/dashboard.css';
 
 /**
@@ -93,20 +94,7 @@ export default function UploadTelemetry() {
     payload.append('bestLapTime', formData.bestLapTime);
 
     try {
-      const response = await fetch('/api/v1/telemetry/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: payload
-      });
-
-      if (response.status === 413) {
-        throw new Error('EL ARCHIVO SUPERA EL TAMAÑO MÁXIMO (10 MB)');
-      }
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'FALLÓ LA VALIDACIÓN DEL ARCHIVO');
-      }
+      await uploadTelemetry(token, payload);
 
       setUploadState({ status: 'success', message: 'SESIÓN REGISTRADA CORRECTAMENTE' });
       
