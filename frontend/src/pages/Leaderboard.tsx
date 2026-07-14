@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Settings, User, LayoutDashboard, Trophy, Upload } from 'lucide-react';
+import { getLeaderboard, type LeaderboardEntry } from '../services/leaderboard.service';
 import '../styles/dashboard.css';
 
 /**
@@ -38,14 +39,6 @@ const CATEGORY_OPTIONS = [
   { id: 4, label: 'WEC' }
 ];
 
-interface LeaderboardEntry {
-  rank: number;
-  username: string;
-  bestLapTime: number;
-  categoryName: string;
-  uploadedAt: string;
-}
-
 export default function Leaderboard() {
   const navigate = useNavigate();
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -62,16 +55,8 @@ export default function Leaderboard() {
       setError(null);
 
       try {
-        const params = new URLSearchParams();
-        if (filters.categoryId) params.append('categoryId', filters.categoryId);
-        if (filters.trackId) params.append('trackId', filters.trackId);
-        params.append('page', String(filters.page));
-        params.append('size', String(10)); // 10 resultados por página
-
-        const response = await fetch(`/api/v1/leaderboard?${params.toString()}`);
-        if (!response.ok) throw new Error('Fallo al obtener la clasificación');
-
-        const data = await response.json();
+        // 10 resultados por página
+        const data = await getLeaderboard({ ...filters, size: 10 });
         setLeaderboardData(data.content || []);
         setTotalPages(data.totalPages || 1);
       } catch (_err) {

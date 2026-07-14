@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom'; // Importante para navegar
+import { login } from '../services/auth.service';
+import { ApiError } from '../services/http';
 import '../styles/auth.css';
 
 export default function Login() {
@@ -23,24 +25,18 @@ export default function Login() {
     
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-     if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('apex_token', data.token);
-        localStorage.setItem('apex_username', data.username);
-        localStorage.setItem('apex_email', data.email);
-        localStorage.setItem('apex_country', data.country ?? '');
-        window.location.href = '/dashboard';
-      } else {
+      const data = await login(formData);
+      localStorage.setItem('apex_token', data.token);
+      localStorage.setItem('apex_username', data.username);
+      localStorage.setItem('apex_email', data.email);
+      localStorage.setItem('apex_country', data.country ?? '');
+      window.location.href = '/dashboard';
+    } catch (err) {
+      if (err instanceof ApiError) {
         setError('Error: Credenciales inválidas');
+      } else {
+        setError('Error de conexión con el servidor');
       }
-    } catch (_err) {
-      setError('Error de conexión con el servidor');
     } finally {
       setLoading(false);
     }
@@ -92,9 +88,12 @@ export default function Login() {
             {loading ? 'CONECTANDO...' : 'INICIAR SESIÓN'} <span>→</span>
           </button>
           
-          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <div style={{ textAlign: 'center', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <Link to="/register" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none' }}>
               ¿No tienes cuenta? Regístrate aquí
+            </Link>
+            <Link to="/forgot-password" style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none' }}>
+              ¿Olvidaste tu contraseña?
             </Link>
           </div>
         </form>

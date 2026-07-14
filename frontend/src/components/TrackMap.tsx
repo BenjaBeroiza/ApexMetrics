@@ -2,23 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, useMap, CircleMarker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// ─────────────────────────────────────────────
-// Tipos
-// ─────────────────────────────────────────────
-
-interface TrackPoint {
-  x: number;
-  y: number;
-  speed: number;
-  distance: number;
-  lapNumber: number;
-}
-
-interface TrackPath {
-  geographic: boolean;
-  points: TrackPoint[];
-}
+import { getTrazado, type TrackPoint, type TrackPath } from '../services/telemetry.service';
+import { ApiError } from '../services/http';
 
 interface TrackMapProps {
   /** Identificador de la sesión cuyo trazado se quiere dibujar. */
@@ -325,18 +310,15 @@ export default function TrackMap({ sessionId }: TrackMapProps) {
       setError(null);
       setTileError(false);
       try {
-        const response = await fetch(`/api/v1/telemetry/sesiones/${sessionId}/trazado`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.status === 403) {
-          if (activo) setError('No tienes permiso para ver esta sesión.');
-          return;
-        }
-        if (!response.ok) throw new Error('Error al cargar el trazado');
-        const data: TrackPath = await response.json();
+        const data = await getTrazado(token, sessionId);
         if (activo) setPath(data);
-      } catch (_err) {
-        if (activo) setError('No se pudo conectar con el servidor.');
+      } catch (err) {
+        if (!activo) return;
+        if (err instanceof ApiError && err.status === 403) {
+          setError('No tienes permiso para ver esta sesión.');
+        } else {
+          setError('No se pudo conectar con el servidor.');
+        }
       } finally {
         if (activo) setLoading(false);
       }

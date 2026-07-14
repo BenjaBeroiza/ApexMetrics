@@ -34,5 +34,9 @@ frontend/coverage/
 .scannerwork/
 frontend/.scannerwork/
 
+# Python (scripts de docs/, p.ej. generate_samples.py)
+__pycache__/
+*.pyc
+
 # Claude Code
 .claude/

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import UploadTelemetry from './UploadTelemetry';
+import UploadTelemetry, { parseLapTimeToSeconds } from './UploadTelemetry';
 
 const renderPage = () =>
   render(
@@ -54,5 +54,24 @@ describe('UploadTelemetry', () => {
     renderPage();
     // Si no hay token, el componente navega a /login y no renderiza el formulario
     expect(document.querySelector('form')).toBeNull();
+  });
+});
+
+describe('parseLapTimeToSeconds', () => {
+  it('convierte el formato m:ss.mmm a segundos', () => {
+    expect(parseLapTimeToSeconds('1:23.424')).toBe(83.424);
+    expect(parseLapTimeToSeconds('1:07.670')).toBe(67.67);
+    expect(parseLapTimeToSeconds('2:05')).toBe(125);
+  });
+
+  it('acepta segundos planos por compatibilidad', () => {
+    expect(parseLapTimeToSeconds('83.424')).toBe(83.424);
+    expect(parseLapTimeToSeconds('70.450')).toBe(70.45);
+  });
+
+  it('retorna null ante formato inválido', () => {
+    expect(parseLapTimeToSeconds('1:60.0')).toBeNull(); // segundos >= 60
+    expect(parseLapTimeToSeconds('abc')).toBeNull();
+    expect(parseLapTimeToSeconds('')).toBeNull();
   });
 });

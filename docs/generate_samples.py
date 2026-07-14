@@ -3,16 +3,26 @@ Genera CSVs de telemetría sintéticos pero realistas para ApexMetrics.
 Uso: python3 docs/generate_samples.py
 Salida: docs/samples/*.csv
 
-Circuitos GPS:
-  - demo_iracing_spa.csv      → Circuit de Spa-Francorchamps (Bélgica)
-  - demo_iracing_monza.csv    → Autodromo Nazionale di Monza (Italia)
+Circuitos GPS (trazado REAL desde OpenStreetMap, ver docs/track_geometry.py):
+  - demo_iracing_spa.csv        → Circuit de Spa-Francorchamps (Bélgica)
+  - demo_iracing_monza.csv      → Autodromo Nazionale di Monza (Italia)
+  - demo_iracing_monza_real.csv → export "real" de alta fidelidad (Monza)
 Circuitos genéricos (sin GPS):
-  - demo_iracing.csv          → iRacing sin GPS, 2 vueltas
-  - demo_assetto_corsa.csv    → Assetto Corsa sin GPS, 2 vueltas
+  - demo_iracing.csv           → iRacing sin GPS, 2 vueltas
+  - demo_assetto_corsa.csv     → Assetto Corsa sin GPS, 2 vueltas
   - demo_assetto_corsa_pos.csv → Assetto Corsa con posición local, 2 vueltas
+
+Nota sobre los CSV GPS: el TRAZADO (lat/lon) proviene de la geometría real de
+OpenStreetMap, por lo que calza exacto sobre los tiles del mapa. La VELOCIDAD y
+los canales de freno/acelerador son un perfil sintético derivado por curvatura
+(no telemetría real del simulador). Ver docs/BUG_CSV_TRAZADOS.md, Causa C.
 """
 import math
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from track_geometry import MONZA_CENTERLINE, SPA_CENTERLINE  # noqa: E402
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
@@ -148,190 +158,179 @@ def gen_ac_no_gps():
 
 
 # ---------------------------------------------------------------------------
-# 3. demo_iracing_spa.csv  —  iRacing GPS, Circuit de Spa-Francorchamps
-#    ~400 puntos, 2 vueltas. Waypoints trazados con ~43 puntos de control
-#    cubriendo todos los sectores del circuito belga.
+# 3-5. CSV GPS con trazado REAL (Monza, Spa) desde OpenStreetMap
+#      El centerline (lat/lon) es geometría real; la velocidad es sintética
+#      derivada por curvatura. Ver docs/track_geometry.py y BUG_CSV_TRAZADOS.md.
 # ---------------------------------------------------------------------------
 
-SPA_WAYPOINTS = [
-    # (lat, lon, speed_km_h) — sentido horario
-    # ── Recta principal / Start-Finish ────────────────────
-    (50.4372, 5.9714, 220),   # línea de meta
-    (50.4375, 5.9709, 160),   # frenada La Source
-    (50.4376, 5.9703, 80),    # La Source entrada
-    (50.4378, 5.9695, 70),    # La Source ápex (horquilla derecha)
-    (50.4374, 5.9687, 80),    # La Source salida
-    # ── Descenso a Eau Rouge ──────────────────────────────
-    (50.4365, 5.9677, 100),   # descenso
-    (50.4355, 5.9670, 115),   # curva izquierda antes de Eau Rouge
-    (50.4348, 5.9668, 105),   # Eau Rouge entrada
-    (50.4343, 5.9663, 95),    # Eau Rouge ápex (izquierda)
-    # ── Raidillon (subida) ────────────────────────────────
-    (50.4346, 5.9651, 130),   # giro derecha al inicio subida
-    (50.4356, 5.9633, 170),   # mitad de la subida
-    (50.4366, 5.9616, 200),   # subida final
-    (50.4378, 5.9601, 230),   # Raidillon cima / exit
-    # ── Recta de Kemmel ──────────────────────────────────
-    (50.4390, 5.9581, 270),
-    (50.4408, 5.9560, 300),
-    (50.4425, 5.9540, 315),
-    (50.4441, 5.9527, 310),   # fin Kemmel / frenada Les Combes
-    # ── Les Combes ────���───────────────────────────────────
-    (50.4451, 5.9524, 100),   # Les Combes giro 1 (derecha)
-    (50.4455, 5.9515, 85),    # Les Combes giro 2 (derecha)
-    (50.4452, 5.9503, 95),    # Les Combes giro 3 (izquierda)
-    # ── Malmedy / descenso ───────────────────────────────
-    (50.4444, 5.9480, 165),
-    (50.4438, 5.9455, 200),
-    (50.4431, 5.9432, 215),
-    # ── Rivage ────────────────────────────────────────────
-    (50.4413, 5.9405, 140),   # frenada Rivage
-    (50.4393, 5.9379, 80),    # Rivage entrada
-    (50.4379, 5.9372, 75),    # Rivage ápex (horquilla izquierda)
-    (50.4365, 5.9385, 100),   # Rivage salida
-    (50.4347, 5.9410, 140),   # descenso post-Rivage
-    # ── Pouhon ───────────────────────────────────────────
-    (50.4330, 5.9432, 170),
-    (50.4317, 5.9450, 200),   # Pouhon entrada (izquierda rápida)
-    (50.4308, 5.9457, 215),   # Pouhon ápex
-    (50.4300, 5.9466, 210),   # Pouhon salida
-    # ── Fagnes / Stavelot ────────────────────────────────
-    (50.4286, 5.9503, 200),   # Fagnes
-    (50.4277, 5.9535, 130),   # frenada Stavelot
-    (50.4272, 5.9558, 90),    # Stavelot entrada
-    (50.4271, 5.9568, 85),    # Stavelot ápex (izquierda)
-    (50.4274, 5.9580, 110),   # Stavelot salida
-    # ── Paul Frere / recta ───────────────────────────────
-    (50.4278, 5.9613, 220),
-    (50.4282, 5.9647, 270),
-    # ── Blanchimont ───────────────────────────────────────
-    (50.4284, 5.9679, 285),   # Blanchimont inicio (izquierda rápida)
-    (50.4286, 5.9700, 275),
-    # ── Bus Stop chicane ─────────────────────────────────
-    (50.4295, 5.9712, 150),   # frenada Bus Stop
-    (50.4307, 5.9720, 90),    # Bus Stop izquierda
-    (50.4313, 5.9717, 85),    # Bus Stop derecha
-    (50.4323, 5.9715, 110),   # Bus Stop salida
-    # ── Regreso a meta ───────────────────────────────────
-    (50.4345, 5.9714, 160),
-    (50.4372, 5.9714, 220),   # cierra circuito
-]
+_EARTH_R = 6371000.0
 
 
-def interpolate_gps_track(waypoints, n_points_total):
-    n_wps = len(waypoints)
-    seg_lengths = []
-    for i in range(n_wps - 1):
-        dlat = waypoints[i+1][0] - waypoints[i][0]
-        dlon = waypoints[i+1][1] - waypoints[i][1]
-        seg_lengths.append(math.sqrt(dlat**2 + dlon**2))
-    total_len = sum(seg_lengths)
-
-    result = []
-    for seg_i in range(n_wps - 1):
-        seg_pts = max(2, round(n_points_total * seg_lengths[seg_i] / total_len))
-        lat0, lon0, v0 = waypoints[seg_i]
-        lat1, lon1, v1 = waypoints[seg_i + 1]
-        for k in range(seg_pts):
-            t = k / seg_pts
-            e = t * t * (3 - 2 * t)
-            result.append((lat0 + (lat1 - lat0) * e, lon0 + (lon1 - lon0) * e, v0 + (v1 - v0) * e))
-
-    while len(result) < n_points_total:
-        result.append(result[-1])
-    return result[:n_points_total]
+def haversine(a, b):
+    """Distancia en metros entre dos (lat, lon)."""
+    p1, p2 = math.radians(a[0]), math.radians(b[0])
+    dphi = math.radians(b[0] - a[0])
+    dl = math.radians(b[1] - a[1])
+    h = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return _EARTH_R * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
 
 
-def gen_iracing_gps_circuit(waypoints, n_per_lap, n_laps, filename_hint=""):
-    track = interpolate_gps_track(waypoints, n_per_lap)
-    speeds = [p[2] for p in track]
+def bearing_rad(a, b):
+    """Rumbo (radianes) del segmento a→b."""
+    lat1, lat2 = math.radians(a[0]), math.radians(b[0])
+    dl = math.radians(b[1] - a[1])
+    x = math.sin(dl) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dl)
+    return math.atan2(x, y)
 
-    window = 4
-    smoothed = []
-    for i in range(n_per_lap):
-        s = sum(speeds[(i + k) % n_per_lap] for k in range(-window, window + 1))
-        smoothed.append(s / (2 * window + 1))
 
-    brakes, throttles = derive_brake_throttle(smoothed)
+def resample_closed(centerline, n):
+    """Re-muestrea un lazo cerrado (lista de (lat, lon)) a n puntos equiespaciados
+    por longitud de arco. Devuelve (puntos, longitud_total_m)."""
+    pts = list(centerline)
+    if haversine(pts[0], pts[-1]) > 1.0:
+        pts = pts + [pts[0]]  # cierra el lazo
+    cum = [0.0]
+    for i in range(1, len(pts)):
+        cum.append(cum[-1] + haversine(pts[i - 1], pts[i]))
+    total = cum[-1]
+    out = []
+    for k in range(n):
+        d = total * k / n
+        j = 0
+        while j < len(cum) - 1 and cum[j + 1] < d:
+            j += 1
+        seg = (cum[j + 1] - cum[j]) or 1.0
+        t = (d - cum[j]) / seg
+        la = pts[j][0] + (pts[j + 1][0] - pts[j][0]) * t
+        lo = pts[j][1] + (pts[j + 1][1] - pts[j][1]) * t
+        out.append((la, lo))
+    return out, total
 
-    R = 6371000
-    rows = ["Distance,Speed,Brake,Throttle,Lat,Lon"]
+
+def curvature_speed(track, vmin, vmax, win=2, smooth=3):
+    """Perfil de velocidad por curvatura: acumula el cambio de rumbo en una
+    ventana corta (una chicane corta debe registrar como muy lenta) y lo mapea
+    a velocidad entre vmin y vmax, con suavizado para un perfil realista."""
+    n = len(track)
+    turn = [0.0] * n
+    for i in range(n):
+        acc = 0.0
+        for k in range(-win, win):
+            a = track[(i + k) % n]
+            b = track[(i + k + 1) % n]
+            c = track[(i + k + 2) % n]
+            acc += abs((bearing_rad(b, c) - bearing_rad(a, b) + math.pi) % (2 * math.pi) - math.pi)
+        turn[i] = acc
+    cap = max(0.5, sorted(turn)[int(n * 0.90)])
+    inten = [min(1.0, t / cap) for t in turn]
+    sm = []
+    for i in range(n):
+        s = sum(inten[(i + k) % n] for k in range(-smooth, smooth + 1))
+        sm.append(s / (2 * smooth + 1))
+    speed = [vmax - (vmax - vmin) * (x ** 0.9) for x in sm]
+    out = []
+    for i in range(n):
+        s = sum(speed[(i + k) % n] for k in range(-smooth, smooth + 1))
+        out.append(s / (2 * smooth + 1))
+    return out
+
+
+def _derive_bt_gps(speeds, vmax=320.0):
+    """Freno/acelerador realistas a partir del perfil de velocidad.
+
+    El freno sigue la INTENSIDAD de desaceleración (pico en la frenada fuerte y
+    liberación progresiva al bajar de marcha hacia el ápex — no una meseta al
+    100%). El acelerador es alto en recta/aceleración y se levanta en la frenada.
+    Ambos se escalan de forma robusta (percentil 92) y se suavizan para eliminar
+    los escalones on/off que producía el umbral binario anterior."""
+    n = len(speeds)
+    accel = [speeds[i] - speeds[(i - 1) % n] for i in range(n)]  # dv por muestra
+    dec = [max(0.0, -a) for a in accel]  # magnitud de frenada
+    acc = [max(0.0, a) for a in accel]   # magnitud de aceleración
+
+    positivos = sorted(d for d in dec if d > 0.0)
+    cap = positivos[int(len(positivos) * 0.92)] if positivos else 1.0
+    cap = max(cap, 1e-3)
+
+    brakes = [min(1.0, d / cap) ** 0.9 for d in dec]
+    throttles = []
+    for i in range(n):
+        if brakes[i] > 0.05:
+            throttles.append(0.0)                                  # no coexisten
+        elif acc[i] > 0.02:
+            throttles.append(min(1.0, 0.45 + acc[i] / cap))        # acelerando
+        else:
+            throttles.append(min(1.0, max(0.5, speeds[i] / vmax)))  # crucero en recta
+
+    def _smooth(arr, w=2):
+        return [sum(arr[(i + k) % n] for k in range(-w, w + 1)) / (2 * w + 1)
+                for i in range(n)]
+
+    brakes = _smooth(brakes, 2)
+    throttles = _smooth(throttles, 2)
+    return [round(b, 3) for b in brakes], [round(t, 3) for t in throttles]
+
+
+def _gear_for_speed(v):
+    """Marcha aproximada en función de la velocidad (km/h), rango 1..7."""
+    gear = 1
+    for th in (80, 120, 160, 200, 240, 280):
+        if v > th:
+            gear += 1
+    return gear
+
+
+def _rpm_for_speed(v, gear):
+    """RPM plausible: sube con la velocidad dentro de la marcha, con leve variación."""
+    base = 4000 + (v % 60) / 60.0 * 4500
+    return int(smooth_clamp(base + (7 - gear) * 250, 3200, 8600))
+
+
+def gen_iracing_gps_real(centerline, n_per_lap, n_laps, vmin, vmax, real_format=False):
+    """Genera un CSV GPS de iRacing sobre un centerline REAL (lat/lon de OSM).
+
+    real_format=False → columnas demo: Distance,Speed,Brake,Throttle,Lat,Lon
+    real_format=True  → export "real": Lat,Lon,Speed,Throttle,Brake,Gear,RPM,Distance
+                        (orden no canónico + columnas extra Gear/RPM que el parser
+                        debe ignorar; ~360 pts/vuelta). Speed en km/h (contrato app).
+    """
+    track, _ = resample_closed(centerline, n_per_lap)
+    speeds = curvature_speed(track, vmin, vmax)
+    brakes, throttles = _derive_bt_gps(speeds, vmax)
+
+    if real_format:
+        rows = ["Lat,Lon,Speed,Throttle,Brake,Gear,RPM,Distance"]
+    else:
+        rows = ["Distance,Speed,Brake,Throttle,Lat,Lon"]
+
     for _lap in range(n_laps):
-        prev_lat, prev_lon = track[0][0], track[0][1]
+        prev = track[0]
         dist_lap = 0.0
         for i in range(n_per_lap):
-            lat, lon, _ = track[i]
-            dlat = math.radians(lat - prev_lat)
-            dlon = math.radians(lon - prev_lon)
-            a = (math.sin(dlat/2)**2
-                 + math.cos(math.radians(prev_lat))
-                 * math.cos(math.radians(lat))
-                 * math.sin(dlon/2)**2)
-            dist_lap += R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-            prev_lat, prev_lon = lat, lon
-            rows.append(
-                f"{dist_lap:.1f},{smoothed[i]:.1f},{brakes[i]:.3f},{throttles[i]:.3f},"
-                f"{lat:.6f},{lon:.6f}"
-            )
-        dist_lap = 0.0  # iRacing resetea distancia en cada vuelta
+            lat, lon = track[i]
+            dist_lap += haversine(prev, track[i])
+            prev = track[i]
+            v = speeds[i]
+            if real_format:
+                gear = _gear_for_speed(v)
+                rpm = _rpm_for_speed(v, gear)
+                rows.append(
+                    f"{lat:.6f},{lon:.6f},{v:.1f},{throttles[i]:.3f},{brakes[i]:.3f},"
+                    f"{gear},{rpm},{dist_lap:.1f}"
+                )
+            else:
+                rows.append(
+                    f"{dist_lap:.1f},{v:.1f},{brakes[i]:.3f},{throttles[i]:.3f},"
+                    f"{lat:.6f},{lon:.6f}"
+                )
+        # iRacing resetea la distancia en cada vuelta → dispara la detección de vuelta
 
     return "\n".join(rows)
 
 
 # ---------------------------------------------------------------------------
-# 4. demo_iracing_monza.csv  —  iRacing GPS, Autodromo Nazionale di Monza
-#    Circuito clásico de ~5.793 km, sentido antihorario.
-# ---------------------------------------------------------------------------
-
-MONZA_WAYPOINTS = [
-    # (lat, lon, speed_km_h)
-    # ── Recta principal ───────────────────────────────────
-    (45.6156, 9.2811, 280),   # Start/Finish
-    (45.6186, 9.2815, 315),
-    (45.6218, 9.2818, 340),   # final recta
-    # ── Prima Variante (chicane) ──────────────────────────
-    (45.6238, 9.2820, 90),    # frenada Prima Variante
-    (45.6243, 9.2826, 80),    # Prima Variante izquierda
-    (45.6240, 9.2831, 75),    # Prima Variante derecha
-    (45.6234, 9.2823, 100),   # salida Prima Variante
-    # ── Curva Grande ─────────────────────────────────────
-    (45.6220, 9.2803, 200),
-    (45.6207, 9.2780, 230),   # Curva Grande (derecha rápida)
-    (45.6197, 9.2763, 245),
-    # ── Roggia (Seconda Variante) ─────────────────────────
-    (45.6191, 9.2768, 100),   # frenada Roggia
-    (45.6187, 9.2776, 90),    # Roggia izquierda
-    (45.6190, 9.2786, 100),   # Roggia derecha
-    # ── Lesmo 1 y 2 ──────────────────────────────────────
-    (45.6181, 9.2820, 200),   # aproximación Lesmos
-    (45.6172, 9.2838, 110),   # frenada Lesmo 1
-    (45.6165, 9.2846, 105),   # Lesmo 1 ápex (derecha)
-    (45.6162, 9.2857, 108),   # Lesmo 2 entrada
-    (45.6163, 9.2866, 120),   # Lesmo 2 ápex (derecha)
-    # ── Recta del Serraglio ───────────────────────────────
-    (45.6173, 9.2877, 230),
-    (45.6185, 9.2889, 265),
-    (45.6197, 9.2900, 285),   # final Serraglio
-    # ── Variante Ascari (chicane) ─────────────────────────
-    (45.6203, 9.2905, 85),    # frenada Ascari
-    (45.6207, 9.2899, 80),    # Ascari izquierda
-    (45.6202, 9.2891, 90),    # Ascari derecha
-    (45.6196, 9.2883, 110),   # Ascari salida
-    # ── Recta antes de Parabolica ─────────────────────────
-    (45.6184, 9.2866, 270),
-    (45.6172, 9.2849, 290),
-    # ── Parabolica (curva derecha larga) ─────────────────
-    (45.6161, 9.2841, 120),   # frenada Parabolica
-    (45.6152, 9.2833, 115),   # Parabolica ápex
-    (45.6146, 9.2820, 150),   # Parabolica salida
-    # ── Regreso a meta ────────────────────────────────────
-    (45.6148, 9.2812, 210),
-    (45.6156, 9.2811, 280),   # cierra circuito
-]
-
-
-# ---------------------------------------------------------------------------
-# 5. demo_assetto_corsa_pos.csv  —  AC con posición local, circuito de kart
+# 6. demo_assetto_corsa_pos.csv  —  AC con posición local, circuito de kart
 #    Formato: pos,speedKmh,brake,gas,posX,posZ — plano CRS.Simple
 # ---------------------------------------------------------------------------
 
@@ -419,11 +418,12 @@ if __name__ == "__main__":
     os.makedirs(SAMPLES_DIR, exist_ok=True)
 
     files = {
-        "demo_iracing.csv":           gen_iracing_no_gps(),
-        "demo_assetto_corsa.csv":     gen_ac_no_gps(),
-        "demo_iracing_spa.csv":       gen_iracing_gps_circuit(SPA_WAYPOINTS, 200, 2),
-        "demo_iracing_monza.csv":     gen_iracing_gps_circuit(MONZA_WAYPOINTS, 200, 2),
-        "demo_assetto_corsa_pos.csv": gen_ac_gps(),
+        "demo_iracing.csv":            gen_iracing_no_gps(),
+        "demo_assetto_corsa.csv":      gen_ac_no_gps(),
+        "demo_iracing_spa.csv":        gen_iracing_gps_real(SPA_CENTERLINE, 200, 2, 80, 315),
+        "demo_iracing_monza.csv":      gen_iracing_gps_real(MONZA_CENTERLINE, 200, 2, 95, 338),
+        "demo_iracing_monza_real.csv": gen_iracing_gps_real(MONZA_CENTERLINE, 360, 2, 95, 338, real_format=True),
+        "demo_assetto_corsa_pos.csv":  gen_ac_gps(),
     }
 
     for name, content in files.items():

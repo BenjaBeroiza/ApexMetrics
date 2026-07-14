@@ -2,6 +2,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Leaderboard from './pages/Leaderboard';
 import Dashboard from './pages/Dashboard';
 import UploadTelemetry from './pages/UploadTelemetry';
@@ -17,6 +19,8 @@ import FeedbackIA from './pages/FeedbackIA';
  * Mapa de rutas:
  *  - /login        → pantalla de inicio de sesión (RF02)
  *  - /register     → pantalla de registro (RF01)
+ *  - /forgot-password → solicitar enlace de reseteo de contraseña (UC03/RF11)
+ *  - /reset-password  → canjear token de reseteo por nueva contraseña (UC03/RF11)
  *  - /leaderboard  → clasificación pública (RF07)
  *  - /dashboard    → historial de sesiones del piloto autenticado (RF08, RF09)
  *  - /dashboard/sesiones/:id/analisis → curvas de velocidad/frenado de una sesión (RF05)
@@ -39,6 +43,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/sesiones/:id/analisis" element={<SessionAnalysis />} />

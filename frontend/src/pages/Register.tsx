@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../services/auth.service';
+import { ApiError } from '../services/http';
 import '../styles/auth.css';
 
 const COUNTRIES = [
@@ -40,23 +42,16 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('apex_email', data.email ?? formData.email);
-        localStorage.setItem('apex_country', data.country ?? formData.country);
-        navigate('/login');
+      const data = await register(payload);
+      localStorage.setItem('apex_email', data.email ?? formData.email);
+      localStorage.setItem('apex_country', data.country ?? formData.country);
+      navigate('/login');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
       } else {
-        const errData = await response.json();
-        setError(errData.message || 'Error en el registro');
+        setError('Error de conexión');
       }
-    } catch (_err) {
-      setError('Error de conexión');
     } finally {
       setLoading(false);
     }

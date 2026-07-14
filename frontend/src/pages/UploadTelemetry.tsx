@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CloudUpload, FileText, Search, Bell, Settings, User, LogOut, LayoutDashboard, Trophy, Upload } from 'lucide-react';
+import { uploadTelemetry } from '../services/telemetry.service';
 import '../styles/dashboard.css';
 
 /**
@@ -37,6 +38,26 @@ const CATEGORY_OPTIONS = [
   { id: 3, label: 'F1' },
   { id: 4, label: 'WEC' }
 ];
+
+/**
+ * Convierte un tiempo de vuelta escrito por el piloto a segundos (número).
+ * Acepta el formato estándar de simuladores `m:ss.mmm` (p. ej. "1:23.424") y,
+ * por compatibilidad, segundos planos (p. ej. "83.424"). Los segundos deben ser
+ * < 60 en el formato con dos puntos. Retorna null si el texto no es válido.
+ */
+export function parseLapTimeToSeconds(raw: string): number | null {
+  const s = raw.trim();
+  if (!s) return null;
+  const withColon = s.match(/^(\d+):([0-5]?\d(?:\.\d{1,3})?)$/);
+  if (withColon) {
+    const mins = parseInt(withColon[1], 10);
+    const secs = parseFloat(withColon[2]);
+    return Math.round((mins * 60 + secs) * 1000) / 1000;
+  }
+  const plainSeconds = s.match(/^\d+(?:\.\d{1,3})?$/);
+  if (plainSeconds) return parseFloat(s);
+  return null;
+}
 
 export default function UploadTelemetry() {
   const navigate = useNavigate();
@@ -83,6 +104,13 @@ export default function UploadTelemetry() {
       return;
     }
 
+    // El piloto ingresa el tiempo como m:ss.mmm (o segundos); el backend almacena segundos.
+    const lapSeconds = parseLapTimeToSeconds(formData.bestLapTime);
+    if (lapSeconds === null) {
+      setUploadState({ status: 'error', message: 'ERROR: TIEMPO INVÁLIDO — USE EL FORMATO 1:23.424' });
+      return;
+    }
+
     setUploadState({ status: 'processing', message: 'PROCESANDO...' });
 
     const payload = new FormData();
@@ -90,23 +118,10 @@ export default function UploadTelemetry() {
     payload.append('simulatorType', formData.simulatorType);
     payload.append('trackId', formData.trackId);
     payload.append('categoryId', formData.categoryId);
-    payload.append('bestLapTime', formData.bestLapTime);
+    payload.append('bestLapTime', String(lapSeconds));
 
     try {
-      const response = await fetch('/api/v1/telemetry/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: payload
-      });
-
-      if (response.status === 413) {
-        throw new Error('EL ARCHIVO SUPERA EL TAMAÑO MÁXIMO (10 MB)');
-      }
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'FALLÓ LA VALIDACIÓN DEL ARCHIVO');
-      }
+      await uploadTelemetry(token, payload);
 
       setUploadState({ status: 'success', message: 'SESIÓN REGISTRADA CORRECTAMENTE' });
       
@@ -208,8 +223,8 @@ export default function UploadTelemetry() {
               </select>
             </div>
             <div className="input-group">
-              <label>MEJOR VUELTA (seg)</label>
-              <input type="number" step="0.001" name="bestLapTime" value={formData.bestLapTime} onChange={handleChange} className="neon-select" placeholder="Ej. 70.450" required />
+              <label>MEJOR VUELTA (m:ss.mmm)</label>
+              <input type="text" inputMode="decimal" name="bestLapTime" value={formData.bestLapTime} onChange={handleChange} className="neon-select" placeholder="Ej. 1:23.424" required />
             </div>
           </div>
 
