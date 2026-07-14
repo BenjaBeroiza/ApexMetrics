@@ -15,6 +15,7 @@ echo "== BACKEND: tests + JaCoCo + SonarQube =="
 
 echo "== FRONTEND: vitest + lcov + SonarQube =="
 ( cd frontend && npm run test:cov && \
+    if [ -f "coverage/lcov.info" ]; then sed -i 's/\\/\//g' coverage/lcov.info 2>/dev/null || sed -i '' 's/\\/\//g' coverage/lcov.info; fi && \
     sonar-scanner -Dsonar.token="$SONAR_TOKEN_FRONTEND" )
 
 echo "OK: revisar dashboards en http://localhost:9000"

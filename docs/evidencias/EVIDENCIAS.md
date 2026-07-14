@@ -18,10 +18,10 @@ desde las observaciones del Hito 5.
 | Vulnerabilidades (Security issues) | 0 | A |
 | Security Hotspots | 1 | E (requiere revisión) |
 | Code Smells (Maintainability) | 27 | A |
-| Cobertura de código | 88.9% | Aceptada |
+| Cobertura de código | 88.7% | Aceptada |
 | Duplicaciones | 0.8% | Excelente |
 
-> **[PEGAR CAPTURA]** — Captura del dashboard de SonarQube mostrando el
+> Captura del dashboard de SonarQube mostrando el
 > estado del proyecto `apexmetrics-backend` con calificación de Quality Gate.
 >
 > Archivo de referencia: `sonarqube-backend.png`
@@ -37,16 +37,14 @@ desde las observaciones del Hito 5.
 
 | Métrica | Valor | Calificación |
 |---------|-------|--------------|
-| Bugs (Reliability issues) | 15 | A |
+| Bugs (Reliability issues) | 18 | A |
 | Vulnerabilidades (Security issues) | 0 | A |
 | Security Hotspots | 0 | A |
-| Code Smells (Maintainability) | 6 | A |
-| Cobertura de código | 0.0% * | Requiere ajuste de ruta del reporte lcov |
-| Duplicaciones | 5.6% | Aceptable |
+| Code Smells (Maintainability) | 7 | A |
+| Cobertura de código | 78.3% | Aceptada |
+| Duplicaciones | 6.4% | Aceptable |
 
-> \* *Nota: La cobertura del frontend se ejecuta correctamente con Vitest, pero la carga a SonarQube requiere afinar la ruta relativa del archivo lcov.info según el directorio de trabajo del escáner.*
->
-> **[PEGAR CAPTURA]** — Captura del dashboard de SonarQube mostrando el
+> Captura del dashboard de SonarQube mostrando el
 > estado del proyecto `apexmetrics-frontend` con calificación de Quality Gate.
 >
 > Archivo de referencia: `sonarqube-frontend.png`
@@ -77,7 +75,7 @@ El componente `TrackMap` integra **OpenStreetMap** a través de `react-leaflet`.
 La carga del mapa base se realiza correctamente y el trazado de telemetría se
 superpone sobre el mapa.
 
-> **[PEGAR CAPTURA]** — Captura del mapa mostrando el trazado de la sesión
+> Captura del mapa mostrando el trazado de la sesión
 > de telemetría sobre el fondo de OpenStreetMap, con la ruta visible.
 >
 > Archivo de referencia: `mapa-osm.png`
@@ -104,7 +102,7 @@ el trazado de la API interna (`GET /api/v1/telemetry/sesiones/{id}/trazado`):
 | Error de red (fetch rechazado) | Captura el error en el bloque `catch` y muestra el mensaje de error |
 | Error HTTP (4xx / 5xx) | Lee `ok` de la Response y lanza error con el status code |
 
-> **[PEGAR CAPTURA]** — Captura mostrando el estado del componente cuando
+> Captura mostrando el estado del componente cuando
 > el backend devuelve un error o no hay puntos de trazado disponibles.
 >
 > Archivo de referencia: `mapa-osm-fallo.png`
