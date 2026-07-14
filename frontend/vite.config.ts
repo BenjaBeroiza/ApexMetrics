@@ -16,6 +16,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
+    server: {
+      deps: {
+        inline: ['html-encoding-sniffer', '@exodus/bytes'],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

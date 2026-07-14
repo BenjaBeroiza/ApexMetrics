@@ -17,6 +17,9 @@ Pop-Location
 Write-Host "== FRONTEND: vitest + lcov + SonarQube ==" -ForegroundColor Cyan
 Push-Location frontend
 npm run test:cov
+if (Test-Path "coverage/lcov.info") {
+  (Get-Content coverage/lcov.info) -replace '\\', '/' | Set-Content coverage/lcov.info
+}
 sonar-scanner "-Dsonar.token=$env:SONAR_TOKEN_FRONTEND"
 Pop-Location
 
